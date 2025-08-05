@@ -9,8 +9,8 @@
     "test": "npx tsx src/run-all-tests.ts",
     "test:all": "npx tsx src/run-all-tests.ts",
     "test:connection": "npx tsx src/test-connection.ts",
-    "test:auth": "npx tsx src/test-slack-auth.ts",
-    "test:sprint-2.1": "npx tsx src/test-sprint-2.1.ts"
+    "test:tools": "npx tsx src/test-tools.ts",
+    "test:resources": "npx tsx src/test-resources.ts"
   },
   "keywords": [
     "mcp",

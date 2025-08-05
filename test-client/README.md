@@ -60,20 +60,27 @@ Create a dedicated channel in your Slack workspace for testing:
 
 ## Running Tests
 
-### Phase 2 Integration Tests
+### Complete Test Suite
 
 ```bash
-# Test authentication
-npm run test:auth
+# Run all tests
+npm run test
 
-# Test basic API calls
-npm run test:api
+# Or run all tests explicitly
+npm run test:all
+```
 
-# Test Slack tools
+### Individual Tests
+
+```bash
+# Test MCP server connection
+npm run test:connection
+
+# Test all available tools (basic + Slack)
 npm run test:tools
 
-# Full integration test
-npm run test:integration
+# Test all available resources
+npm run test:resources
 ```
 
 ### Manual Testing

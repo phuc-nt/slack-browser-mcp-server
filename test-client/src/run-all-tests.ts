@@ -32,10 +32,10 @@ async function runTest(testFile: string): Promise<boolean> {
 
 async function runAllTests() {
   console.log('🚀 Starting Slack MCP Server Test Suite');
-  console.log('📅 Sprint 2.1 Completion Testing');
+  console.log('📅 Complete MCP Server Testing');
   console.log(`⏰ ${new Date().toISOString()}\n`);
 
-  const tests = ['test-connection.ts', 'test-slack-auth.ts', 'test-sprint-2.1.ts'];
+  const tests = ['test-connection.ts', 'test-tools.ts', 'test-resources.ts'];
 
   const results: boolean[] = [];
 
