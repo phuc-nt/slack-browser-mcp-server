@@ -1,0 +1,23 @@
+{
+  "name": "slack-mcp-server-test-client",
+  "version": "1.0.0",
+  "description": "Test client for Slack MCP Server",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "ts-node --esm src/test-connection.ts",
+    "test:connection": "ts-node --esm src/test-connection.ts"
+  },
+  "keywords": ["mcp", "slack", "test", "client"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.2.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  }
+}
