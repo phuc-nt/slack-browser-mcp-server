@@ -113,9 +113,9 @@ docs/
 
 ### 🎯 Current Focus
 
-- **Status**: Phase 1 ✅ COMPLETED → Phase 2 📋 Ready
-- **Next**: Slack Integration (browser token auth)
-- **Details**: [Project Roadmap](01_preparation/project_roadmap.md)
+- **Status**: Phase 1 ✅ COMPLETED → Phase 2 📋 Planning Complete
+- **Next**: Sprint 2.1 starts Aug 19 (Browser token auth)
+- **Details**: [Sprint 2.1](02_implementation/sprints/sprint_2_1.md) & [Sprint 2.2](02_implementation/sprints/sprint_2_2.md)
 
 ---
 
