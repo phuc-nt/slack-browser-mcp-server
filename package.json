@@ -1,0 +1,43 @@
+{
+  "name": "slack-browser-mcp-server",
+  "version": "1.0.0",
+  "description": "> **AI Assistants meets Slack** - Tích hợp Claude với Slack workspace mà không cần permissions",
+  "main": "dist/index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "clean": "rm -rf dist",
+    "lint": "eslint src/**/*.ts",
+    "format": "prettier --write src/**/*.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/phuc-nt/slack-browser-mcp-server.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/phuc-nt/slack-browser-mcp-server/issues"
+  },
+  "homepage": "https://github.com/phuc-nt/slack-browser-mcp-server#readme",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.1",
+    "dotenv": "^17.2.1",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.2.0",
+    "@typescript-eslint/eslint-plugin": "^8.39.0",
+    "eslint": "^9.32.0",
+    "prettier": "^3.6.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  }
+}

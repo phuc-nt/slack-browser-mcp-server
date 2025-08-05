@@ -20,10 +20,10 @@
 ## 📊 Current Status
 
 **Phase 1: Foundation** (Aug 5-18, 2025)
-- 📋 **Week 1**: Project setup & MCP server core
+- ✅ **Week 1**: Project setup & MCP server core _(COMPLETED)_
 - 📋 **Week 2**: Tool architecture & development environment
 
-> 🚧 **Project Status**: Planning phase - no code yet  
+> ✅ **Project Status**: Foundation established - MCP server ready  
 > 📖 **Start Here**: [docs/START_POINT.md](docs/START_POINT.md)
 
 ## 🏗️ Tech Stack
@@ -47,21 +47,48 @@ Performance: Intelligent caching
 
 ### For Users
 ```bash
-# Coming soon - project in development
-# Will be: npm install -g slack-mcp-server
+# Coming soon - Slack integration not ready yet
+# Current: Basic MCP server foundation available
 ```
 
 ### For Developers
 ```bash
-# Project chưa exist - follow Sprint 1.1
-# See: docs/02_implementation/sprints/sprint_1_1.md
+# Clone and setup
+git clone <repo-url>
+cd slack-browser-mcp-server
+npm install
+
+# Build project
+npm run build
+
+# Run development server
+npm run dev
+
+# Run built server  
+npm start
+```
+
+### Claude Desktop Integration
+```json
+// Add to ~/.config/claude-desktop/config.json
+{
+  "mcpServers": {
+    "slack-browser-mcp-server": {
+      "command": "node",
+      "args": ["/path/to/slack-browser-mcp-server/dist/index.js"],
+      "env": {
+        "LOG_LEVEL": "info"
+      }
+    }
+  }
+}
 ```
 
 ## 🎯 Roadmap
 
 | Phase | Duration | Status | Focus |
 |-------|----------|--------|-------|
-| **1. Foundation** | Aug 5-18 | 📋 Planning | MCP server core |
+| **1. Foundation** | Aug 5-18 | 🔄 In Progress | MCP server core |
 | **2. Slack Integration** | Aug 19 - Sep 1 | 📋 Planned | Stealth auth & tools |
 | **3. Caching & Performance** | Sep 2-15 | 📋 Planned | Intelligent caching |
 | **4. Production Ready** | Sep 16-29 | 📋 Planned | Polish & release |

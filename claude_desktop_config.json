@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "slack-browser-mcp-server": {
+      "command": "node",
+      "args": [
+        "/Users/phucnt/Workspace/slack-browser-mcp-server/dist/index.js"
+      ],
+      "env": {
+        "SLACK_XOXC_TOKEN": "xoxc-your-token-here",
+        "SLACK_XOXD_TOKEN": "xoxd-your-token-here",
+        "LOG_LEVEL": "info"
+      }
+    }
+  }
+}
