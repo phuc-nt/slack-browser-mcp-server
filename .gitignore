@@ -50,3 +50,7 @@ temp/
 # Cache directories
 .cache/
 .eslintcache
+
+# Claude Code specific files
+.claude/
+CLAUDE.md
