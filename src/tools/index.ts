@@ -1,9 +1,15 @@
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { EnhancedToolFactory } from './factory.js';
-import { ToolMiddleware, ToolMetrics, ToolRegistryConfig, ToolContext, ToolExecutionResult } from '../types/tools.js';
+import {
+  ToolMiddleware,
+  ToolMetrics,
+  ToolRegistryConfig,
+  ToolContext,
+  ToolExecutionResult,
+} from '../types/tools.js';
 import { ConversationsPlaceholder } from './conversations.js';
-import { ChannelsPlaceholder } from './channels.js';
 import { SearchPlaceholder } from './search.js';
+import { listChannels, listUsers, getChannelHistory } from './slack-channels.js';
 import { logger } from '../utils/logger.js';
 
 // Export types for convenience
@@ -24,16 +30,16 @@ export class ToolRegistry {
       defaultTimeout: 30000,
       maxConcurrentExecutions: 10,
       middleware: [],
-      ...config
+      ...config,
     };
 
     this.factory = new EnhancedToolFactory();
     this.middleware = [...this.config.middleware];
-    
+
     logger.info('Enhanced ToolRegistry initialized', {
       enableMetrics: this.config.enableMetrics,
       enableTracing: this.config.enableTracing,
-      maxConcurrentExecutions: this.config.maxConcurrentExecutions
+      maxConcurrentExecutions: this.config.maxConcurrentExecutions,
     });
   }
 
@@ -49,20 +55,20 @@ export class ToolRegistry {
     try {
       // Load built-in tools
       await this.loadBuiltInTools();
-      
+
       // Load placeholder definitions for future Slack tools
       await this.loadPlaceholderTools();
-      
+
       // Initialize metrics
       if (this.config.enableMetrics) {
         this.initializeMetrics();
       }
 
       this.isInitialized = true;
-      
+
       logger.info('ToolRegistry initialization completed', {
         toolCount: this.factory.getAllToolInstances().length,
-        categories: this.factory.getStats().categoryCounts
+        categories: this.factory.getStats().categoryCounts,
       });
     } catch (error) {
       logger.error('ToolRegistry initialization failed', error);
@@ -78,7 +84,7 @@ export class ToolRegistry {
     const stats = this.factory.getStats();
     logger.info('Built-in tools loaded', {
       count: stats.instances,
-      tools: this.factory.getRegisteredTools()
+      tools: this.factory.getRegisteredTools(),
     });
   }
 
@@ -88,12 +94,11 @@ export class ToolRegistry {
   private async loadPlaceholderTools(): Promise<void> {
     const placeholderTools = [
       ...ConversationsPlaceholder.getPlaceholderTools(),
-      ...ChannelsPlaceholder.getPlaceholderTools(),
-      ...SearchPlaceholder.getPlaceholderTools()
+      ...SearchPlaceholder.getPlaceholderTools(),
     ];
 
     logger.info('Loading placeholder tools for future Slack integration', {
-      count: placeholderTools.length
+      count: placeholderTools.length,
     });
 
     // Note: These are just definitions, actual implementations will come in Phase 2
@@ -101,7 +106,7 @@ export class ToolRegistry {
       logger.debug('Placeholder tool registered', {
         name: tool.name,
         category: tool.category,
-        requiresAuth: tool.requiresAuth
+        requiresAuth: tool.requiresAuth,
       });
     }
   }
@@ -111,7 +116,7 @@ export class ToolRegistry {
    */
   private initializeMetrics(): void {
     const instances = this.factory.getAllToolInstances();
-    
+
     for (const instance of instances) {
       const definition = instance.getDefinition();
       this.metrics.set(definition.name, {
@@ -121,12 +126,12 @@ export class ToolRegistry {
         averageExecutionTime: 0,
         errorCount: 0,
         lastExecuted: new Date(),
-        cacheHitRate: 0
+        cacheHitRate: 0,
       });
     }
 
     logger.debug('Metrics initialized for tools', {
-      toolCount: this.metrics.size
+      toolCount: this.metrics.size,
     });
   }
 
@@ -136,11 +141,11 @@ export class ToolRegistry {
   registerMiddleware(middleware: ToolMiddleware): void {
     this.middleware.push(middleware);
     this.middleware.sort((a, b) => b.priority - a.priority);
-    
+
     logger.debug('Middleware registered', {
       name: middleware.name,
       priority: middleware.priority,
-      totalMiddleware: this.middleware.length
+      totalMiddleware: this.middleware.length,
     });
   }
 
@@ -149,8 +154,8 @@ export class ToolRegistry {
    */
   getTools(): Tool[] {
     const instances = this.factory.getAllToolInstances();
-    
-    return instances.map(instance => {
+
+    return instances.map((instance) => {
       const definition = instance.getDefinition();
       return {
         name: definition.name,
@@ -158,8 +163,8 @@ export class ToolRegistry {
         inputSchema: {
           type: 'object' as const,
           properties: definition.inputSchema.properties || {},
-          required: definition.inputSchema.required || []
-        }
+          required: definition.inputSchema.required || [],
+        },
       };
     });
   }
@@ -172,30 +177,32 @@ export class ToolRegistry {
     if (this.concurrentExecutions >= this.config.maxConcurrentExecutions) {
       return {
         success: false,
-        content: [{
-          type: 'text',
-          text: 'Error: Maximum concurrent executions exceeded. Please try again later.'
-        }],
-        isError: true
+        content: [
+          {
+            type: 'text',
+            text: 'Error: Maximum concurrent executions exceeded. Please try again later.',
+          },
+        ],
+        isError: true,
       };
     }
 
     this.concurrentExecutions++;
-    
+
     try {
       const context: ToolContext = {
         toolName: name,
         startTime: Date.now(),
         traceId: this.generateTraceId(),
         metadata: {
-          concurrentExecutions: this.concurrentExecutions
-        }
+          concurrentExecutions: this.concurrentExecutions,
+        },
       };
 
       logger.debug('Tool execution started', {
         toolName: name,
         traceId: context.traceId,
-        args
+        args,
       });
 
       // Execute middleware beforeTool hooks
@@ -219,17 +226,16 @@ export class ToolRegistry {
         toolName: name,
         traceId: context.traceId,
         success: result.success,
-        executionTime: result.metadata?.executionTime
+        executionTime: result.metadata?.executionTime,
       });
 
       return mcpResult;
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
+
       logger.error('Tool execution failed', {
         toolName: name,
-        error: errorMessage
+        error: errorMessage,
       });
 
       // Update error metrics
@@ -239,11 +245,13 @@ export class ToolRegistry {
 
       return {
         success: false,
-        content: [{
-          type: 'text',
-          text: `Error executing tool ${name}: ${errorMessage}`
-        }],
-        isError: true
+        content: [
+          {
+            type: 'text',
+            text: `Error executing tool ${name}: ${errorMessage}`,
+          },
+        ],
+        isError: true,
       };
     } finally {
       this.concurrentExecutions--;
@@ -261,7 +269,7 @@ export class ToolRegistry {
         } catch (error) {
           logger.warn('Middleware before hook failed', {
             middleware: middleware.name,
-            error: error instanceof Error ? error.message : 'Unknown error'
+            error: error instanceof Error ? error.message : 'Unknown error',
           });
         }
       }
@@ -271,7 +279,10 @@ export class ToolRegistry {
   /**
    * Execute middleware after hooks
    */
-  private async executeMiddlewareAfter(context: ToolContext, result: ToolExecutionResult): Promise<void> {
+  private async executeMiddlewareAfter(
+    context: ToolContext,
+    result: ToolExecutionResult
+  ): Promise<void> {
     for (const middleware of this.middleware) {
       if (middleware.after) {
         try {
@@ -279,7 +290,7 @@ export class ToolRegistry {
         } catch (error) {
           logger.warn('Middleware after hook failed', {
             middleware: middleware.name,
-            error: error instanceof Error ? error.message : 'Unknown error'
+            error: error instanceof Error ? error.message : 'Unknown error',
           });
         }
       }
@@ -295,7 +306,7 @@ export class ToolRegistry {
 
     metrics.executionCount++;
     metrics.lastExecuted = new Date();
-    
+
     if (result.metadata?.executionTime) {
       metrics.totalExecutionTime += result.metadata.executionTime;
       metrics.averageExecutionTime = metrics.totalExecutionTime / metrics.executionCount;
@@ -307,8 +318,8 @@ export class ToolRegistry {
 
     if (result.metadata?.cacheHits && result.metadata?.apiCalls) {
       const totalRequests = result.metadata.cacheHits + result.metadata.apiCalls;
-      metrics.cacheHitRate = totalRequests > 0 ? 
-        (result.metadata.cacheHits / totalRequests) * 100 : 0;
+      metrics.cacheHitRate =
+        totalRequests > 0 ? (result.metadata.cacheHits / totalRequests) * 100 : 0;
     }
   }
 
@@ -329,19 +340,24 @@ export class ToolRegistry {
     if (result.success && result.data) {
       return {
         success: true,
-        content: [{
-          type: 'text',
-          text: typeof result.data === 'string' ? result.data : JSON.stringify(result.data, null, 2)
-        }]
+        content: [
+          {
+            type: 'text',
+            text:
+              typeof result.data === 'string' ? result.data : JSON.stringify(result.data, null, 2),
+          },
+        ],
       };
     } else {
       return {
         success: false,
-        content: [{
-          type: 'text',
-          text: result.error || 'Unknown error occurred'
-        }],
-        isError: true
+        content: [
+          {
+            type: 'text',
+            text: result.error || 'Unknown error occurred',
+          },
+        ],
+        isError: true,
       };
     }
   }
@@ -363,7 +379,7 @@ export class ToolRegistry {
       concurrentExecutions: this.concurrentExecutions,
       maxConcurrentExecutions: this.config.maxConcurrentExecutions,
       middlewareCount: this.middleware.length,
-      metricsEnabled: this.config.enableMetrics
+      metricsEnabled: this.config.enableMetrics,
     };
   }
 
@@ -385,7 +401,7 @@ export class ToolRegistry {
       metrics.errorCount = 0;
       metrics.cacheHitRate = 0;
     }
-    
+
     logger.info('Tool metrics reset');
   }
 
@@ -394,8 +410,8 @@ export class ToolRegistry {
    */
   async cleanup(): Promise<void> {
     logger.info('ToolRegistry cleanup started');
-    
-    // Cleanup all tool instances  
+
+    // Cleanup all tool instances
     const instances = this.factory.getAllToolInstances();
     for (const instance of instances) {
       if (instance.cleanup) {
@@ -404,7 +420,7 @@ export class ToolRegistry {
         } catch (error) {
           logger.warn('Tool cleanup failed', {
             toolName: instance.getDefinition().name,
-            error: error instanceof Error ? error.message : 'Unknown error'
+            error: error instanceof Error ? error.message : 'Unknown error',
           });
         }
       }
@@ -413,7 +429,7 @@ export class ToolRegistry {
     // Clear caches
     this.factory.clearCaches();
     this.metrics.clear();
-    
+
     logger.info('ToolRegistry cleanup completed');
   }
 }

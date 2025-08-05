@@ -6,18 +6,28 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "test": "ts-node --esm src/test-connection.ts",
-    "test:connection": "ts-node --esm src/test-connection.ts"
+    "test": "npx tsx src/run-all-tests.ts",
+    "test:all": "npx tsx src/run-all-tests.ts",
+    "test:connection": "npx tsx src/test-connection.ts",
+    "test:auth": "npx tsx src/test-slack-auth.ts",
+    "test:sprint-2.1": "npx tsx src/test-sprint-2.1.ts"
   },
-  "keywords": ["mcp", "slack", "test", "client"],
+  "keywords": [
+    "mcp",
+    "slack",
+    "test",
+    "client"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.17.1"
+    "@modelcontextprotocol/sdk": "^1.17.1",
+    "dotenv": "^16.3.0"
   },
   "devDependencies": {
     "@types/node": "^24.2.0",
     "ts-node": "^10.9.2",
+    "tsx": "^4.20.3",
     "typescript": "^5.9.2"
   }
 }

@@ -1,6 +1,13 @@
 import { BaseSlackTool, SlackToolFactory } from './base.js';
-import { SlackTool, ToolCategory, ToolValidationResult, ToolContext, ToolExecutionResult } from '../types/tools.js';
+import {
+  SlackTool,
+  ToolCategory,
+  ToolValidationResult,
+  ToolContext,
+  ToolExecutionResult,
+} from '../types/tools.js';
 import { PingTool, EchoTool } from './conversations.js';
+import { ListChannelsTool, ListUsersTool, GetChannelHistoryTool } from './slack-tools.js';
 import { logger } from '../utils/logger.js';
 // Simple validation without Ajv for now
 
@@ -13,7 +20,7 @@ export class EnhancedToolFactory extends SlackToolFactory {
 
   constructor() {
     super();
-    
+
     // Register built-in tools
     this.registerBuiltInTools();
   }
@@ -25,12 +32,20 @@ export class EnhancedToolFactory extends SlackToolFactory {
     // Create and register built-in tool instances directly
     const pingTool = new PingTool();
     const echoTool = new EchoTool();
-    
+
+    // Create and register Slack tool instances
+    const listChannelsTool = new ListChannelsTool();
+    const listUsersTool = new ListUsersTool();
+    const getChannelHistoryTool = new GetChannelHistoryTool();
+
     this.toolInstances.set(pingTool.getDefinition().name, pingTool);
     this.toolInstances.set(echoTool.getDefinition().name, echoTool);
-    
+    this.toolInstances.set(listChannelsTool.getDefinition().name, listChannelsTool);
+    this.toolInstances.set(listUsersTool.getDefinition().name, listUsersTool);
+    this.toolInstances.set(getChannelHistoryTool.getDefinition().name, getChannelHistoryTool);
+
     logger.info('Registered built-in tools', {
-      tools: Array.from(this.toolInstances.keys())
+      tools: Array.from(this.toolInstances.keys()),
     });
   }
 
@@ -48,7 +63,7 @@ export class EnhancedToolFactory extends SlackToolFactory {
     if (!validation.isValid) {
       logger.error('Tool definition validation failed', {
         toolName: definition.name,
-        errors: validation.errors
+        errors: validation.errors,
       });
       return null;
     }
@@ -59,7 +74,7 @@ export class EnhancedToolFactory extends SlackToolFactory {
       this.toolInstances.set(definition.name, instance);
       logger.debug('Created and cached tool instance', {
         toolName: definition.name,
-        category: definition.category
+        category: definition.category,
       });
     }
 
@@ -98,7 +113,7 @@ export class EnhancedToolFactory extends SlackToolFactory {
         if (!Array.isArray(definition.tags)) {
           errors.push('Tags must be an array of strings');
         } else {
-          const invalidTags = definition.tags.filter(tag => typeof tag !== 'string');
+          const invalidTags = definition.tags.filter((tag) => typeof tag !== 'string');
           if (invalidTags.length > 0) {
             errors.push(`Invalid tag types: ${invalidTags.join(', ')}`);
           }
@@ -117,7 +132,6 @@ export class EnhancedToolFactory extends SlackToolFactory {
           warnings.push('Rate limit maxCalls is very high (>1000)');
         }
       }
-
     } catch (error) {
       errors.push(`Validation error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -125,12 +139,12 @@ export class EnhancedToolFactory extends SlackToolFactory {
     const result: ToolValidationResult = {
       isValid: errors.length === 0,
       errors,
-      warnings
+      warnings,
     };
 
     // Cache result
     this.validationCache.set(cacheKey, result);
-    
+
     return result;
   }
 
@@ -143,12 +157,12 @@ export class EnhancedToolFactory extends SlackToolFactory {
       return {
         isValid: false,
         errors: [`Tool not found: ${toolName}`],
-        warnings: []
+        warnings: [],
       };
     }
 
     const definition = instance.getDefinition();
-    
+
     try {
       // Simple validation - check required fields
       if (definition.inputSchema.required) {
@@ -157,7 +171,7 @@ export class EnhancedToolFactory extends SlackToolFactory {
             return {
               isValid: false,
               errors: [`Required field missing: ${field}`],
-              warnings: []
+              warnings: [],
             };
           }
         }
@@ -166,13 +180,15 @@ export class EnhancedToolFactory extends SlackToolFactory {
       return {
         isValid: true,
         errors: [],
-        warnings: []
+        warnings: [],
       };
     } catch (error) {
       return {
         isValid: false,
-        errors: [`Input validation error: ${error instanceof Error ? error.message : 'Unknown error'}`],
-        warnings: []
+        errors: [
+          `Input validation error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        ],
+        warnings: [],
       };
     }
   }
@@ -180,7 +196,11 @@ export class EnhancedToolFactory extends SlackToolFactory {
   /**
    * Execute tool with comprehensive validation and error handling
    */
-  async executeTool(toolName: string, args: any, context: ToolContext): Promise<ToolExecutionResult> {
+  async executeTool(
+    toolName: string,
+    args: any,
+    context: ToolContext
+  ): Promise<ToolExecutionResult> {
     const instance = this.toolInstances.get(toolName);
     if (!instance) {
       return {
@@ -190,8 +210,8 @@ export class EnhancedToolFactory extends SlackToolFactory {
         metadata: {
           executionTime: 0,
           apiCalls: 0,
-          cacheHits: 0
-        }
+          cacheHits: 0,
+        },
       };
     }
 
@@ -205,20 +225,20 @@ export class EnhancedToolFactory extends SlackToolFactory {
         metadata: {
           executionTime: 0,
           apiCalls: 0,
-          cacheHits: 0
-        }
+          cacheHits: 0,
+        },
       };
     }
 
     // Execute tool
     try {
       const result = await instance.execute(args, context);
-      
+
       logger.debug('Tool executed successfully', {
         toolName,
         traceId: context.traceId,
         executionTime: result.metadata?.executionTime,
-        success: result.success
+        success: result.success,
       });
 
       return result;
@@ -226,7 +246,7 @@ export class EnhancedToolFactory extends SlackToolFactory {
       logger.error('Tool execution failed', {
         toolName,
         traceId: context.traceId,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
 
       return {
@@ -236,8 +256,8 @@ export class EnhancedToolFactory extends SlackToolFactory {
         metadata: {
           executionTime: Date.now() - context.startTime,
           apiCalls: 0,
-          cacheHits: 0
-        }
+          cacheHits: 0,
+        },
       };
     }
   }
@@ -245,7 +265,7 @@ export class EnhancedToolFactory extends SlackToolFactory {
   /**
    * Load tools dynamically from definitions
    */
-  loadToolsFromDefinitions(definitions: SlackTool[]): { loaded: string[], failed: string[] } {
+  loadToolsFromDefinitions(definitions: SlackTool[]): { loaded: string[]; failed: string[] } {
     const loaded: string[] = [];
     const failed: string[] = [];
 
@@ -260,14 +280,14 @@ export class EnhancedToolFactory extends SlackToolFactory {
       } catch (error) {
         logger.error('Failed to load tool from definition', {
           toolName: definition.name,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
         failed.push(definition.name);
       }
     }
 
     logger.info('Dynamic tool loading completed', { loaded, failed });
-    
+
     return { loaded, failed };
   }
 
@@ -289,8 +309,9 @@ export class EnhancedToolFactory extends SlackToolFactory {
    * Get tools by category
    */
   getToolsByCategory(category: ToolCategory): BaseSlackTool[] {
-    return Array.from(this.toolInstances.values())
-      .filter(tool => tool.getDefinition().category === category);
+    return Array.from(this.toolInstances.values()).filter(
+      (tool) => tool.getDefinition().category === category
+    );
   }
 
   /**
@@ -309,7 +330,7 @@ export class EnhancedToolFactory extends SlackToolFactory {
       registeredClasses: this.getRegisteredTools().length,
       instances: this.toolInstances.size,
       validationCacheSize: this.validationCache.size,
-      categoryCounts: this.getCategoryCounts()
+      categoryCounts: this.getCategoryCounts(),
     };
   }
 
@@ -318,12 +339,12 @@ export class EnhancedToolFactory extends SlackToolFactory {
    */
   private getCategoryCounts(): Record<string, number> {
     const counts: Record<string, number> = {};
-    
+
     for (const tool of this.toolInstances.values()) {
       const category = tool.getDefinition().category;
       counts[category] = (counts[category] || 0) + 1;
     }
-    
+
     return counts;
   }
 
