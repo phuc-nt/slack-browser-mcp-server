@@ -54,3 +54,6 @@ temp/
 # Claude Code specific files
 .claude/
 CLAUDE.md
+
+# Serena MCP cache
+.serena/

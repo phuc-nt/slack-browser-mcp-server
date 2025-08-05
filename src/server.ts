@@ -4,15 +4,20 @@ import {
   CallToolRequestSchema,
   ErrorCode,
   ListToolsRequestSchema,
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema,
   McpError,
   Tool,
 } from '@modelcontextprotocol/sdk/types.js';
 import { logger } from './utils/logger.js';
 import { ToolRegistry } from './tools/index.js';
+import { ResourceRegistry } from './resources/index.js';
+import { createDevelopmentMiddleware } from './middleware/index.js';
 
 export class SlackMCPServer {
   private server: Server;
   private toolRegistry: ToolRegistry;
+  private resourceRegistry: ResourceRegistry;
 
   constructor() {
     this.server = new Server(
@@ -23,18 +28,29 @@ export class SlackMCPServer {
       {
         capabilities: {
           tools: {},
+          resources: {}
         },
       }
     );
 
-    this.toolRegistry = new ToolRegistry();
+    // Initialize registries with middleware
+    const middleware = createDevelopmentMiddleware();
+    this.toolRegistry = new ToolRegistry({
+      middleware,
+      enableMetrics: true,
+      enableTracing: true
+    });
+    
+    this.resourceRegistry = new ResourceRegistry();
     this.setupHandlers();
   }
 
   private setupHandlers(): void {
+    // Tools handlers
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       logger.info('Received list tools request');
       const tools = this.toolRegistry.getTools();
+      logger.debug('Returning tools', { count: tools.length, tools: tools.map(t => t.name) });
       return { tools };
     });
 
@@ -45,8 +61,11 @@ export class SlackMCPServer {
       try {
         const result = await this.toolRegistry.executeTool(name, args || {});
         return {
-          content: result.content,
-          isError: result.isError || false,
+          content: result.content || [{
+            type: 'text',
+            text: result.success ? JSON.stringify(result.data, null, 2) : (result.error || 'Unknown error')
+          }],
+          isError: result.isError || !result.success,
         };
       } catch (error) {
         logger.error(`Tool execution failed: ${name}`, { error });
@@ -57,15 +76,63 @@ export class SlackMCPServer {
       }
     });
 
+    // Resource handlers
+    this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
+      logger.info('Received list resources request');
+      const resources = this.resourceRegistry.getResources();
+      logger.debug('Returning resources', { count: resources.length });
+      return { resources };
+    });
+
+    this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+      const { uri } = request.params;
+      logger.info(`Received read resource request: ${uri}`);
+
+      try {
+        const resource = this.resourceRegistry.getResource(uri);
+        if (!resource) {
+          throw new McpError(ErrorCode.InvalidRequest, `Resource not found: ${uri}`);
+        }
+
+        const content = await this.resourceRegistry.generateResourceContent(uri);
+        return {
+          contents: [{
+            uri,
+            mimeType: resource.mimeType,
+            text: content
+          }]
+        };
+      } catch (error) {
+        logger.error(`Resource read failed: ${uri}`, { error });
+        throw new McpError(
+          ErrorCode.InternalError,
+          `Resource read failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+    });
+
     logger.info('MCP server handlers configured');
   }
 
   async run(): Promise<void> {
+    // Initialize tool registry
+    logger.info('Initializing tool registry...');
+    await this.toolRegistry.initialize();
+    
+    // Connect to transport
     const transport = new StdioServerTransport();
     logger.info('Starting Slack MCP Server with stdio transport');
     
     await this.server.connect(transport);
     logger.info('Slack MCP Server connected and ready');
+    
+    // Log initialization stats
+    const stats = this.toolRegistry.getStats();
+    logger.info('Server initialization completed', {
+      tools: stats.instances,
+      middleware: stats.middlewareCount,
+      resources: this.resourceRegistry.getResources().length
+    });
   }
 
   async stop(): Promise<void> {

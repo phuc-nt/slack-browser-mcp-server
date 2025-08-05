@@ -13,7 +13,9 @@
     "clean": "rm -rf dist",
     "lint": "eslint src/**/*.ts",
     "format": "prettier --write src/**/*.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "cd test-client && npm test",
+    "debug": "ts-node --inspect src/index.ts",
+    "lint:fix": "eslint src/**/*.ts --fix"
   },
   "repository": {
     "type": "git",
