@@ -256,7 +256,16 @@ export class SlackResources {
    */
   static extractChannelIdFromUri(uri: string): string | null {
     const match = uri.match(/^slack:\/\/channels\/([^\/]+)\/history$/);
-    return match ? match[1] : null;
+    if (!match) return null;
+    
+    const channelId = match[1];
+    
+    // Reject template placeholders
+    if (channelId.includes('{') || channelId.includes('}')) {
+      return null;
+    }
+    
+    return channelId;
   }
 
   /**

@@ -111,8 +111,25 @@ export class ResourceRegistry {
       this.generateSlackWorkspaceUsers.bind(this)
     );
 
+    // Dynamic resource template for channel history (documentation purpose)
+    this.registerResource({
+      uri: 'slack://channels/{channelId}/history',
+      name: 'Channel History Template',
+      description: 'Get messages from a specific channel. Replace {channelId} with actual channel ID. Supports parameters: limit, oldest, latest',
+      mimeType: 'application/json',
+      requiresAuth: true,
+      cacheable: false,
+      generator: {
+        type: 'dynamic'
+      }
+    }, this.generateChannelHistoryTemplate.bind(this));
+
     logger.info('Slack workspace resources registered', {
-      resources: ['slack://workspace/channels', 'slack://workspace/users']
+      resources: [
+        'slack://workspace/channels', 
+        'slack://workspace/users',
+        'slack://channels/{channelId}/history'
+      ]
     });
   }
 
@@ -154,20 +171,9 @@ export class ResourceRegistry {
    * Generate resource content (with dynamic URI support)
    */
   async generateResourceContent(uri: string): Promise<string> {
-    // FIRST: Check if this is a dynamic resource
-    const baseUri = uri.split('?')[0];
-    const isDynamicResource = baseUri.startsWith('slack://channels/') && baseUri.endsWith('/history');
-    
-    if (isDynamicResource) {
-      const channelId = SlackResources.extractChannelIdFromUri(baseUri);
-      if (channelId) {
-        const params = SlackResources.extractParamsFromUri(uri);
-        return await SlackResources.generateChannelHistoryContent(channelId, params);
-      }
-    }
-    
-    // Check for exact match for static resources
+    // FIRST: Check for exact match for static resources (including templates)
     const generator = this.generators.get(uri);
+    
     if (generator) {
       try {
         logger.debug('Generating resource content', { uri });
@@ -183,6 +189,20 @@ export class ResourceRegistry {
           error: error instanceof Error ? error.message : 'Unknown error'
         });
         throw error;
+      }
+    }
+
+    // SECOND: Check if this is a dynamic resource (actual channel IDs)
+    const baseUri = uri.split('?')[0];
+    const isDynamicResource = baseUri.startsWith('slack://channels/') && 
+                             baseUri.endsWith('/history') && 
+                             !baseUri.includes('{channelId}'); // Exclude template URI
+    
+    if (isDynamicResource) {
+      const channelId = SlackResources.extractChannelIdFromUri(baseUri);
+      if (channelId) {
+        const params = SlackResources.extractParamsFromUri(uri);
+        return await SlackResources.generateChannelHistoryContent(channelId, params);
       }
     }
 
@@ -365,5 +385,44 @@ export class ResourceRegistry {
     // Extract query parameters if any (for future URL-based filtering)
     const params: Record<string, string> = {};
     return await SlackResources.generateWorkspaceUsersContent(params);
+  }
+
+  /**
+   * Generate channel history template documentation
+   */
+  private async generateChannelHistoryTemplate(): Promise<string> {
+    const template = {
+      template: 'slack://channels/{channelId}/history',
+      description: 'Dynamic resource for getting channel message history',
+      usage: {
+        uri_pattern: 'slack://channels/CHANNEL_ID/history',
+        example: 'slack://channels/C07UMQ2PR1V/history',
+        parameters: {
+          limit: {
+            type: 'number',
+            description: 'Number of messages to retrieve (1-1000)',
+            default: 20,
+            example: 'slack://channels/C07UMQ2PR1V/history?limit=50'
+          },
+          oldest: {
+            type: 'string',
+            description: 'Oldest message timestamp to include',
+            example: 'slack://channels/C07UMQ2PR1V/history?oldest=1640995200.123456'
+          },
+          latest: {
+            type: 'string', 
+            description: 'Latest message timestamp to include',
+            example: 'slack://channels/C07UMQ2PR1V/history?latest=1640995200.123456'
+          }
+        }
+      },
+      notes: [
+        'Replace {channelId} with actual Slack channel ID (starts with C)',
+        'Parameters can be combined: ?limit=10&oldest=1640995200.123456',
+        'This template shows available parameters - use actual channel IDs for real data'
+      ]
+    };
+
+    return JSON.stringify(template, null, 2);
   }
 }

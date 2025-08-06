@@ -53,13 +53,42 @@ async function testResources() {
       console.log(`  ${index + 1}. ${resource.uri}`);
       console.log(`     Name: ${resource.name}`);
       console.log(`     Description: ${resource.description || 'No description'}`);
-      console.log(`     MIME Type: ${resource.mimeType || 'text/plain'}\n`);
+      console.log(`     MIME Type: ${resource.mimeType || 'text/plain'}`);
+      
+      // Highlight template resources
+      if (resource.uri.includes('{') && resource.uri.includes('}')) {
+        console.log(`     ⚡ Template Resource - Use actual IDs for real data`);
+      }
+      console.log();
     });
 
     // Test reading each resource
     console.log('='.repeat(50));
     console.log('Testing Resource Reading');
     console.log('='.repeat(50));
+    
+    // Test template resource first
+    const templateResource = resources.find((r) => r.uri.includes('{channelId}'));
+    if (templateResource) {
+      console.log('\n📖 Testing template resource documentation...');
+      try {
+        const templateData = await client.readResource({ uri: templateResource.uri });
+        console.log('✅ Template resource read successful');
+        
+        if (templateData.contents?.[0]) {
+          const templateText = (templateData.contents[0] as any).text as string;
+          const template = JSON.parse(templateText);
+          
+          console.log('📋 Template Information:');
+          console.log(`  Template: ${template.template}`);
+          console.log(`  Pattern: ${template.usage?.uri_pattern}`);
+          console.log(`  Example: ${template.usage?.example}`);
+          console.log(`  Parameters: ${Object.keys(template.usage?.parameters || {}).join(', ')}`);
+        }
+      } catch (error) {
+        console.log('❌ Template resource failed:', error instanceof Error ? error.message : error);
+      }
+    }
 
     for (const resource of resources) {
       console.log(`\n📖 Reading resource: ${resource.name}`);

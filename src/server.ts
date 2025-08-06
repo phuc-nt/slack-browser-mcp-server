@@ -86,34 +86,36 @@ export class SlackMCPServer {
 
     this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
       const { uri } = request.params;
-      console.log('[DEBUG SERVER] ===== READ RESOURCE REQUEST =====');
-      console.log('[DEBUG SERVER] URI:', uri);
+      
+      
       logger.info(`Received read resource request: ${uri}`);
 
       try {
         // FIRST: Check if this is a dynamic resource before doing getResource()
         const baseUri = uri.split('?')[0];
-        const isDynamicResource = baseUri.startsWith('slack://channels/') && baseUri.endsWith('/history');
+        const isDynamicResource = baseUri.startsWith('slack://channels/') && 
+                                 baseUri.endsWith('/history') && 
+                                 !baseUri.includes('{channelId}'); // Exclude template URI
         
-        console.log('[DEBUG SERVER] URI:', uri);
-        console.log('[DEBUG SERVER] BaseURI:', baseUri);
-        console.log('[DEBUG SERVER] isDynamicResource:', isDynamicResource);
+        
+        
+        
         
         let mimeType = 'application/json'; // default
         
         if (isDynamicResource) {
-          console.log('[DEBUG SERVER] Processing as dynamic resource');
+          
           // Skip getResource() for dynamic resources, go straight to generation
         } else {
           // Try to get exact resource match for static resources
           const resource = this.resourceRegistry.getResource(uri);
-          console.log('[DEBUG SERVER] getResource result:', resource ? 'FOUND' : 'NOT_FOUND');
+          
           
           if (resource) {
             mimeType = resource.mimeType;
-            console.log('[DEBUG SERVER] Using static resource');
+            
           } else {
-            console.log('[DEBUG SERVER] Static resource not found, throwing error');
+            
             throw new McpError(ErrorCode.InvalidRequest, `Resource not found: ${uri}`);
           }
         }

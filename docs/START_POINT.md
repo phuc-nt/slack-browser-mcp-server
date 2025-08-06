@@ -33,12 +33,35 @@
 - `src/tools/slack-tools.ts` - Tool implementations extending BaseSlackTool
 - `test-client/src/test-sprint-2.1.ts` - Integration test suite
 
-#### 🔄 Sprint 2.2: Advanced Tools (NEXT)
+#### ✅ Sprint 2.2: MCP Architecture Refactor (COMPLETED Aug 6, 2025)
 
-- Advanced messaging tools
-- Search functionality
-- File handling capabilities
-- Performance optimizationCP Server\*\* - Tích hợp AI Assistants với Slack workspace mà không cần permissions
+**🎯 MCP Specification Compliance Achieved!**
+
+**Key Achievements:**
+
+- **MCP Pattern Compliance**: Migrated read-only operations from Tools to Resources following MCP specification
+- **Dynamic Resources**: Implemented parameterized dynamic resources `slack://channels/{id}/history` with full parameter support
+- **Resource Discovery**: Added template resource for dynamic URI pattern documentation
+- **Integration Verified**: CLine AI assistant successfully tested all 8 resources và dynamic channel history
+- **Clean Architecture**: Separated Tools (actions) from Resources (read-only data) correctly
+
+**Technical Implementation:**
+
+- Removed read-only Tools: `list_channels`, `list_users`, `get_channel_history`
+- Added MCP Resources: `slack://workspace/channels`, `slack://workspace/users` 
+- Dynamic Resources: `slack://channels/C07UMQ2PR1V/history?limit=20` working perfectly
+- Template Resource: `slack://channels/{channelId}/history` for pattern discovery
+- Comprehensive test suite: All resources tested and verified
+
+**Resource Count**: 8 total resources (5 system + 3 Slack resources)
+**Tool Count**: 2 system tools (ping, echo) - action-based only
+
+#### 🔄 Sprint 2.3: Advanced Messaging Tools (NEXT)
+
+- Post messages to channels
+- Reply to threads 
+- Message formatting và attachments
+- Advanced search functionality
 
 ---
 
@@ -72,13 +95,13 @@ Cache: node-cache + file system
 
 **Phase Goal**: Build MCP server core infrastructure
 
-**Results**: 2 working tools, 5 system resources, complete MCP compliance  
-**Details**: See [Project Roadmap](01_preparation/project_roadmap.md#phase-1-foundation) for full breakdown
+**Results**: 2 working tools, 8 total resources, full MCP specification compliance  
+**Details**: See [Project Roadmap](01_preparation/project_roadmap.md#phase-2-slack-integration) for complete Sprint 2.2 results
 
 #### 📊 Project Progress:
 
 - **Phase 1: Foundation** ✅ COMPLETED (100%)
-- **Phase 2: Slack Integration** 📋 Ready to Start
+- **Phase 2: Slack Integration** 🚧 IN PROGRESS (Sprint 2.2 COMPLETED)
 - **Phase 3: Caching & Performance** 📋 Planned
 - **Phase 4: Production Ready** 📋 Planned
 
@@ -153,19 +176,20 @@ docs/
 
 ### For AI Assistant Implementation
 
-1. **Ready for Sprint 2.2**: Sprint 2.1 completed successfully ahead of schedule
-2. **Current Working State**: 3 Slack tools fully functional với real API
-3. **Test Suite**: Use `npm run test` trong test-client để verify functionality
-4. **Documentation**: All implementation details trong sprint documents
+1. **Ready for Sprint 2.3**: Sprint 2.2 MCP Architecture Refactor completed successfully
+2. **Current Working State**: 8 MCP resources fully functional, dynamic resources working perfectly
+3. **MCP Compliance**: Full specification compliance achieved - Tools vs Resources properly separated
+4. **Test Suite**: Use `npx tsx test-client/src/test-resources.ts` to verify all resources
+5. **Integration Verified**: CLine AI assistant successfully tested all functionality
 
 ### For Human Developers
 
-1. **Get started**: Follow [Sprint 2.1 completion report](./02_implementation/sprints/sprint_2_1.md)
+1. **Get started**: Follow [Sprint 2.2 completion report](./02_implementation/sprints/sprint_2_2.md)
 2. **Test integration**: Real Slack tokens configured trong .env
-3. **Development ready**: All tools working với live Slack workspace
-4. **Next sprint**: Advanced messaging tools in Sprint 2.2
+3. **Development ready**: All 8 MCP resources working với live Slack workspace
+4. **Next sprint**: Advanced messaging tools in Sprint 2.3
 
-**🏆 Sprint 2.1 Achievement: Real Slack integration working perfectly!**
+**🏆 Sprint 2.2 Achievement: Full MCP specification compliance achieved!**
 
 ---
 
@@ -188,4 +212,4 @@ docs/
 ---
 
 _🔄 File này là central hub - update khi có major changes_  
-_📅 Last updated: 2025-08-05 (Phase 1 Complete - Ready for Phase 2 Slack Integration)_
+_📅 Last updated: 2025-08-06 (Sprint 2.2 Complete - MCP Architecture Refactor Achieved)_
