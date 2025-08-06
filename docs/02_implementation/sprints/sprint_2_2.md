@@ -27,6 +27,70 @@
 
 ## 📋 Detailed Tasks
 
+### 🚨 CRITICAL: Day 0-1: MCP Architecture Compliance
+
+**Task 2.2.0: MCP Pattern Refactor [FOUNDATION]**
+
+> **Priority**: CRITICAL - Must complete before new feature development
+> **Impact**: Ensures all future development follows correct MCP specification
+
+- [ ] **Architecture Analysis**:
+  - Audit current Tools vs Resources classification
+  - Identify MCP pattern violations
+  - Document correct Resource/Tool mapping
+
+- [ ] **Current Tools → Resources Migration**:
+  ```typescript
+  // MIGRATE TO RESOURCES (Read-only operations)
+  ❌ Tools → ✅ Resources:
+  - list_channels → slack://workspace/channels  
+  - list_users → slack://workspace/users
+  - get_channel_history → slack://channels/{id}/history
+  
+  // NEW RESOURCE ADDITIONS:
+  - slack://channels/{id}/info - Channel metadata  
+  - slack://users/{id}/profile - User profile data
+  - slack://workspace/search/channels - Channel discovery
+  ```
+
+- [ ] **Action Tools Architecture** (Keep as Tools):
+  ```typescript
+  // CORRECT TOOLS (Action operations)
+  ✅ Keep as Tools:
+  - post_message: Send message (POST)
+  - update_message: Edit message (PUT) 
+  - delete_message: Remove message (DELETE)
+  - join_channel: Join channel (POST)
+  - leave_channel: Leave channel (DELETE)
+  ```
+
+- [ ] **Resource System Enhancement**:
+  - Extend ResourceRegistry với Slack workspace resources
+  - Implement dynamic resource generation với API calls
+  - Add authentication middleware cho protected resources
+  - Resource caching strategy cho performance
+
+- [ ] **Tool System Cleanup**:
+  - Remove read-only operations from tool system
+  - Update tool factory với action-only tools
+  - Refactor BaseSlackTool cho action operations only
+  - Update tool validation rules
+
+- [ ] **Integration Testing**:
+  - Test resource endpoints work correctly
+  - Verify tool operations still functional
+  - End-to-end MCP compliance verification
+  - Performance impact assessment
+
+**🎯 Success Criteria:**
+- [ ] All read operations moved to Resources
+- [ ] All action operations remain as Tools  
+- [ ] MCP specification 100% compliant
+- [ ] Existing functionality preserved
+- [ ] Test suite passes completely
+
+---
+
 ### Day 1-2: Advanced Slack Tools
 
 **Task 2.2.1: Message Operations**
@@ -47,39 +111,64 @@
   - `post_thread_reply` tool
   - Thread navigation helpers
 
-**Task 2.2.2: Search & Discovery**
+**Task 2.2.2: Search & Discovery Resources** *(MCP Compliant)*
 
-- [ ] Implement `search_messages` tool:
-  - Full-text search across workspace
-  - Channel-specific search
-  - Date range filtering
-  - User filtering
-- [ ] Implement `search_users` tool:
-  - User lookup by name/email
-  - Status và presence information
-- [ ] Implement `search_channels` tool:
-  - Channel discovery
-  - Public/private filtering
-  - Member count sorting
+> **Note**: Search operations moved to Resources (read-only) per MCP specification
+
+- [ ] Implement search resources:
+  ```typescript
+  // RESOURCES (Read operations)
+  - slack://workspace/search?query={text} - Full-text workspace search
+  - slack://workspace/search/messages?query={text}&channel={id} - Message search
+  - slack://workspace/search/users?query={name|email} - User lookup
+  - slack://workspace/search/channels?query={name}&type={public|private} - Channel discovery
+  ```
+- [ ] Search resource features:
+  - Parameterized URIs với query support
+  - Date range filtering via URL parameters  
+  - Channel/user filtering via URL parameters
+  - Pagination support cho large results
+- [ ] Search result caching:
+  - Cache search results cho performance
+  - TTL-based cache invalidation
+  - Search query normalization
 
 ### Day 3-4: Workspace Management
 
-**Task 2.2.3: Channel Management Tools**
+**Task 2.2.3: Channel Management** *(MCP Compliant Split)*
 
-- [ ] Implement `join_channel` tool
-- [ ] Implement `leave_channel` tool
-- [ ] Implement `create_channel` tool (if permissions allow)
-- [ ] Implement `get_channel_info` tool:
-  - Channel metadata
-  - Member list
-  - Channel settings
+**✅ Action Tools** (Modify operations):
+- [ ] Implement `join_channel` tool (POST operation)
+- [ ] Implement `leave_channel` tool (DELETE operation)  
+- [ ] Implement `create_channel` tool (POST operation, if permissions allow)
+- [ ] Implement `invite_to_channel` tool (POST operation)
+- [ ] Implement `archive_channel` tool (PUT operation, if permissions allow)
 
-**Task 2.2.4: User Interaction Tools**
+**📋 Channel Resources** (Read operations):  
+- [ ] Implement channel info resources:
+  ```typescript
+  - slack://channels/{id}/info - Channel metadata
+  - slack://channels/{id}/members - Member list  
+  - slack://channels/{id}/settings - Channel settings
+  - slack://channels/{id}/pins - Pinned messages
+  ```
 
-- [ ] Implement `send_dm` tool (direct message)
-- [ ] Implement `get_user_profile` tool
-- [ ] Implement `set_status` tool (if supported)
-- [ ] Implement `get_presence` tool
+**Task 2.2.4: User Interaction** *(MCP Compliant Split)*
+
+**✅ Action Tools** (Modify operations):
+- [ ] Implement `send_dm` tool (POST - direct message)
+- [ ] Implement `set_status` tool (PUT - update status, if supported)
+- [ ] Implement `set_presence` tool (PUT - update presence)
+- [ ] Implement `update_profile` tool (PUT - update user profile)
+
+**📋 User Resources** (Read operations):
+- [ ] Implement user info resources:
+  ```typescript
+  - slack://users/{id}/profile - User profile data
+  - slack://users/{id}/presence - User online status
+  - slack://users/{id}/status - Current status message
+  - slack://users/me/conversations - User's DM conversations
+  ```
 
 ### Day 5-6: Production Features
 
@@ -157,37 +246,56 @@
 }
 ```
 
-### Complete Tool Suite
+### 🏗️ MCP-Compliant Architecture
 
+**📋 Resources (Read Operations - GET equivalent)**
 ```typescript
-// Messaging Tools
-- post_message: Send message to channel
-- update_message: Edit existing message
-- delete_message: Delete message
-- get_thread_replies: Get thread messages
-- post_thread_reply: Reply to thread
+// Workspace Resources
+- slack://workspace/info: Workspace metadata
+- slack://workspace/channels: Channel listing  
+- slack://workspace/users: User directory
+- slack://workspace/search?query={text}: Global search
 
-// Channel Tools
-- list_channels: List accessible channels
-- get_channel_info: Channel metadata
-- join_channel: Join public channel
-- leave_channel: Leave channel
-- get_channel_history: Read channel messages
+// Channel Resources  
+- slack://channels/{id}/info: Channel metadata
+- slack://channels/{id}/history: Message history
+- slack://channels/{id}/members: Channel members
+- slack://channels/{id}/pins: Pinned messages
 
-// User Tools
-- list_users: List workspace users
-- get_user_profile: User details
-- send_dm: Direct message user
-- get_presence: User online status
+// User Resources
+- slack://users/{id}/profile: User profile
+- slack://users/{id}/presence: Online status  
+- slack://users/{id}/conversations: User's DMs
 
-// Search Tools
-- search_messages: Full-text search
-- search_users: Find users
-- search_channels: Discover channels
+// Search Resources
+- slack://workspace/search/messages?query={text}: Message search
+- slack://workspace/search/users?query={name}: User search
+- slack://workspace/search/channels?query={name}: Channel search
+```
 
-// File Tools
-- upload_file: Upload file to channel
-- get_file_info: File metadata
+**🔧 Tools (Action Operations - POST/PUT/DELETE equivalent)**
+```typescript
+// Messaging Tools (Actions)
+- post_message: Send message (POST)
+- update_message: Edit message (PUT)  
+- delete_message: Remove message (DELETE)
+- post_thread_reply: Reply to thread (POST)
+
+// Channel Tools (Actions)
+- join_channel: Join channel (POST)
+- leave_channel: Leave channel (DELETE)
+- create_channel: Create new channel (POST)
+- invite_to_channel: Invite user (POST)
+
+// User Tools (Actions)  
+- send_dm: Send direct message (POST)
+- set_status: Update status (PUT)
+- set_presence: Update presence (PUT)
+- update_profile: Update profile (PUT)
+
+// File Tools (Actions)
+- upload_file: Upload file (POST)
+- delete_file: Remove file (DELETE)
 ```
 
 ---
@@ -272,12 +380,20 @@
 
 ## 📊 Definition of Done
 
+### 🏗️ MCP Compliance Criteria
+
+- [ ] **Architecture Compliance**: 100% MCP specification adherence
+- [ ] **Resource/Tool Split**: All read operations as Resources, actions as Tools
+- [ ] **Resource System**: Dynamic resource generation với Slack API integration
+- [ ] **Tool System**: Action-only tools với proper validation
+- [ ] **Integration Tests**: MCP client compatibility verified
+
 ### Tool Suite Criteria
 
-- [ ] 12+ Slack tools fully functional
-- [ ] All tools pass integration tests
+- [ ] 12+ Slack resources + tools fully functional  
+- [ ] All tools/resources pass integration tests
 - [ ] Error handling covers 95% of scenarios
-- [ ] Tool execution times under 3 seconds
+- [ ] Resource/tool execution times under 3 seconds
 
 ### Integration Criteria
 
