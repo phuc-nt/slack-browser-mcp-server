@@ -89,6 +89,11 @@ export class ResourceRegistry {
     // Register Slack workspace resources (MCP-compliant replacements for tools)
     this.registerSlackResources();
 
+    // Register Slack search resources (Sprint 2.3) - async
+    this.registerSlackSearchResources().catch(error => {
+      logger.warn('Failed to register search resources during construction', { error });
+    });
+
     logger.info('Built-in resources registered', {
       count: this.resources.size,
       resources: Array.from(this.resources.keys())
@@ -131,6 +136,53 @@ export class ResourceRegistry {
         'slack://channels/{channelId}/history'
       ]
     });
+  }
+
+  /**
+   * Register Slack search resources
+   */
+  private async registerSlackSearchResources(): Promise<void> {
+    try {
+      // Import search resources
+      const { SearchResources } = await import('./search.js');
+      
+      // Workspace global search resource
+      this.registerResource(
+        SearchResources.createWorkspaceSearchResource(),
+        this.generateSlackWorkspaceSearch.bind(this)
+      );
+
+      // Message search resource
+      this.registerResource(
+        SearchResources.createMessageSearchResource(), 
+        this.generateSlackMessageSearch.bind(this)
+      );
+
+      // User search resource
+      this.registerResource(
+        SearchResources.createUserSearchResource(),
+        this.generateSlackUserSearch.bind(this)
+      );
+
+      // Channel search resource
+      this.registerResource(
+        SearchResources.createChannelSearchResource(),
+        this.generateSlackChannelSearch.bind(this)
+      );
+
+      logger.info('Slack search resources registered', {
+        resources: [
+          'slack://workspace/search',
+          'slack://search/messages', 
+          'slack://search/users',
+          'slack://search/channels'
+        ]
+      });
+    } catch (error) {
+      logger.warn('Failed to register search resources', {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
   }
 
   /**
@@ -203,6 +255,25 @@ export class ResourceRegistry {
       if (channelId) {
         const params = SlackResources.extractParamsFromUri(uri);
         return await SlackResources.generateChannelHistoryContent(channelId, params);
+      }
+    }
+
+    // THIRD: Check if this is a search resource with parameters
+    const isSearchResource = baseUri.startsWith('slack://workspace/search') ||
+                             baseUri.startsWith('slack://search/');
+    
+    if (isSearchResource) {
+      const { SearchResources } = await import('./search.js');
+      const searchParams = SearchResources.extractSearchParamsFromUri(uri);
+      
+      if (baseUri === 'slack://workspace/search') {
+        return await SearchResources.generateWorkspaceSearchContent(searchParams);
+      } else if (baseUri === 'slack://search/messages') {
+        return await SearchResources.generateMessageSearchContent(searchParams);
+      } else if (baseUri === 'slack://search/users') {
+        return await SearchResources.generateUserSearchContent(searchParams);
+      } else if (baseUri === 'slack://search/channels') {
+        return await SearchResources.generateChannelSearchContent(searchParams);
       }
     }
 
@@ -424,5 +495,53 @@ export class ResourceRegistry {
     };
 
     return JSON.stringify(template, null, 2);
+  }
+
+  /**
+   * Generate Slack workspace search content
+   */
+  private async generateSlackWorkspaceSearch(): Promise<string> {
+    // This method will be called with URI parameters - extract them from the current context
+    // For now, return a placeholder indicating search functionality
+    const { SearchResources } = await import('./search.js');
+    
+    // In a real implementation, we would get URI from context
+    // For now, return example usage
+    return SearchResources.generateWorkspaceSearchContent({
+      query: undefined // Will be populated from URI parameters
+    });
+  }
+
+  /**
+   * Generate Slack message search content  
+   */
+  private async generateSlackMessageSearch(): Promise<string> {
+    const { SearchResources } = await import('./search.js');
+    
+    return SearchResources.generateMessageSearchContent({
+      query: undefined // Will be populated from URI parameters
+    });
+  }
+
+  /**
+   * Generate Slack user search content
+   */
+  private async generateSlackUserSearch(): Promise<string> {
+    const { SearchResources } = await import('./search.js');
+    
+    return SearchResources.generateUserSearchContent({
+      query: undefined // Will be populated from URI parameters  
+    });
+  }
+
+  /**
+   * Generate Slack channel search content
+   */
+  private async generateSlackChannelSearch(): Promise<string> {
+    const { SearchResources } = await import('./search.js');
+    
+    return SearchResources.generateChannelSearchContent({
+      query: undefined // Will be populated from URI parameters
+    });
   }
 }

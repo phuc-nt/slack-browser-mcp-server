@@ -14,12 +14,15 @@ export interface SlackTool {
   name: string;
   description: string;
   inputSchema: JSONSchema;
-  category: ToolCategory;
+  category: ToolCategory | string;
   tags?: string[];
   requiresAuth?: boolean;
+  action?: 'GET' | 'POST' | 'PUT' | 'DELETE';  // MCP action type for tools
   rateLimit?: {
-    maxCalls: number;
-    windowMs: number;
+    maxCalls?: number;      // Legacy format
+    windowMs?: number;      // Legacy format
+    rpm?: number;          // Requests per minute (new format)
+    burst?: number;        // Burst limit (new format)
   };
 }
 
@@ -32,7 +35,8 @@ export enum ToolCategory {
   SEARCH = 'search',
   USERS = 'users',
   FILES = 'files',
-  SYSTEM = 'system'
+  SYSTEM = 'system',
+  MESSAGING = 'messaging'  // Added for Sprint 2.3 messaging tools
 }
 
 /**

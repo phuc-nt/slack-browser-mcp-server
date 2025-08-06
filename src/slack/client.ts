@@ -131,7 +131,10 @@ export class SlackClient {
   async postMessage(
     channel: string,
     text: string,
-    threadTs?: string
+    threadTs?: string,
+    blocks?: any[],
+    attachments?: any[],
+    unfurlLinks?: boolean
   ): Promise<SlackPostMessageResponse> {
     try {
       const data: Record<string, any> = {
@@ -143,7 +146,52 @@ export class SlackClient {
         data.thread_ts = threadTs;
       }
 
+      if (blocks && blocks.length > 0) {
+        data.blocks = JSON.stringify(blocks);
+      }
+
+      if (attachments && attachments.length > 0) {
+        data.attachments = JSON.stringify(attachments);
+      }
+
+      if (unfurlLinks !== undefined) {
+        data.unfurl_links = unfurlLinks;
+      }
+
       const response = await this.makeRequest<SlackPostMessageResponse>('chat.postMessage', data);
+
+      if (!response.ok) {
+        throw new Error(`Slack API error: ${response.error || 'Unknown error'}`);;
+      }
+
+      return response;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to post message: ${errorMessage}`);
+    }
+  }
+
+  /**
+   * Update/edit an existing message
+   */
+  async updateMessage(
+    channel: string,
+    ts: string,
+    text: string,
+    blocks?: any[]
+  ): Promise<SlackPostMessageResponse> {
+    try {
+      const data: Record<string, any> = {
+        channel,
+        ts,
+        text,
+      };
+
+      if (blocks && blocks.length > 0) {
+        data.blocks = JSON.stringify(blocks);
+      }
+
+      const response = await this.makeRequest<SlackPostMessageResponse>('chat.update', data);
 
       if (!response.ok) {
         throw new Error(`Slack API error: ${response.error || 'Unknown error'}`);
@@ -152,7 +200,31 @@ export class SlackClient {
       return response;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to post message: ${errorMessage}`);
+      throw new Error(`Failed to update message: ${errorMessage}`);
+    }
+  }
+
+  /**
+   * Delete a message
+   */
+  async deleteMessage(channel: string, ts: string): Promise<{ ok: boolean; channel: string; ts: string }> {
+    try {
+      const response = await this.makeRequest<{ ok: boolean; channel: string; ts: string }>(
+        'chat.delete',
+        {
+          channel,
+          ts,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Slack API error: Failed to delete message`);
+      }
+
+      return response;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to delete message: ${errorMessage}`);
     }
   }
 

@@ -36,8 +36,39 @@ export class EnhancedToolFactory extends SlackToolFactory {
     this.toolInstances.set(pingTool.getDefinition().name, pingTool);
     this.toolInstances.set(echoTool.getDefinition().name, echoTool);
 
+    // Register messaging tools (Sprint 2.3)
+    try {
+      // Import messaging tools dynamically
+      const { PostMessageTool, PostThreadReplyTool, UpdateMessageTool, DeleteMessageTool } = 
+        require('./messaging.js');
+      
+      const postMessageTool = new PostMessageTool();
+      const postThreadReplyTool = new PostThreadReplyTool();
+      const updateMessageTool = new UpdateMessageTool();
+      const deleteMessageTool = new DeleteMessageTool();
+
+      this.toolInstances.set(postMessageTool.getDefinition().name, postMessageTool);
+      this.toolInstances.set(postThreadReplyTool.getDefinition().name, postThreadReplyTool);
+      this.toolInstances.set(updateMessageTool.getDefinition().name, updateMessageTool);
+      this.toolInstances.set(deleteMessageTool.getDefinition().name, deleteMessageTool);
+
+      logger.info('Registered messaging tools', {
+        tools: [
+          'post_message',
+          'post_thread_reply', 
+          'update_message',
+          'delete_message'
+        ]
+      });
+    } catch (error) {
+      logger.warn('Failed to register messaging tools', {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+
     logger.info('Registered built-in tools', {
       tools: Array.from(this.toolInstances.keys()),
+      totalCount: this.toolInstances.size
     });
   }
 
@@ -114,14 +145,20 @@ export class EnhancedToolFactory extends SlackToolFactory {
 
       // Validate rate limit configuration
       if (definition.rateLimit) {
-        if (definition.rateLimit.maxCalls <= 0) {
+        if (definition.rateLimit.maxCalls && definition.rateLimit.maxCalls <= 0) {
           errors.push('Rate limit maxCalls must be positive');
         }
-        if (definition.rateLimit.windowMs <= 0) {
+        if (definition.rateLimit.windowMs && definition.rateLimit.windowMs <= 0) {
           errors.push('Rate limit windowMs must be positive');
         }
-        if (definition.rateLimit.maxCalls > 1000) {
+        if (definition.rateLimit.maxCalls && definition.rateLimit.maxCalls > 1000) {
           warnings.push('Rate limit maxCalls is very high (>1000)');
+        }
+        if (definition.rateLimit.rpm && definition.rateLimit.rpm <= 0) {
+          errors.push('Rate limit rpm must be positive');
+        }
+        if (definition.rateLimit.burst && definition.rateLimit.burst <= 0) {
+          errors.push('Rate limit burst must be positive');
         }
       }
     } catch (error) {

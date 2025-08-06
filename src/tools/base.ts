@@ -176,7 +176,7 @@ export class SlackToolFactory {
     if (!definition.category) errors.push('Tool category is required');
 
     // Category validation
-    if (definition.category && !Object.values(ToolCategory).includes(definition.category)) {
+    if (definition.category && !Object.values(ToolCategory).includes(definition.category as ToolCategory)) {
       errors.push(`Invalid tool category: ${definition.category}`);
     }
 
