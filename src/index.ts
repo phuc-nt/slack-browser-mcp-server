@@ -5,6 +5,8 @@ import { SlackMCPServer } from './server.js';
 import { logger } from './utils/logger.js';
 
 async function main(): Promise<void> {
+  console.log('[DEBUG INDEX] ===== SLACK MCP SERVER STARTING =====');
+  console.log('[DEBUG INDEX] This is the MODIFIED version with dynamic resource support');
   logger.info('Initializing Slack MCP Server');
 
   const server = new SlackMCPServer();

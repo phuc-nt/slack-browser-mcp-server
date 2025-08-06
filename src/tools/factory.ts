@@ -7,7 +7,7 @@ import {
   ToolExecutionResult,
 } from '../types/tools.js';
 import { PingTool, EchoTool } from './conversations.js';
-import { ListChannelsTool, ListUsersTool, GetChannelHistoryTool } from './slack-tools.js';
+// import { ListChannelsTool, ListUsersTool, GetChannelHistoryTool } from './slack-tools.js'; // REMOVED: MCP-compliant - moved to Resources
 import { logger } from '../utils/logger.js';
 // Simple validation without Ajv for now
 
@@ -33,16 +33,8 @@ export class EnhancedToolFactory extends SlackToolFactory {
     const pingTool = new PingTool();
     const echoTool = new EchoTool();
 
-    // Create and register Slack tool instances
-    const listChannelsTool = new ListChannelsTool();
-    const listUsersTool = new ListUsersTool();
-    const getChannelHistoryTool = new GetChannelHistoryTool();
-
     this.toolInstances.set(pingTool.getDefinition().name, pingTool);
     this.toolInstances.set(echoTool.getDefinition().name, echoTool);
-    this.toolInstances.set(listChannelsTool.getDefinition().name, listChannelsTool);
-    this.toolInstances.set(listUsersTool.getDefinition().name, listUsersTool);
-    this.toolInstances.set(getChannelHistoryTool.getDefinition().name, getChannelHistoryTool);
 
     logger.info('Registered built-in tools', {
       tools: Array.from(this.toolInstances.keys()),

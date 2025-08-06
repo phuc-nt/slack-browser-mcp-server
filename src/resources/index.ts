@@ -1,6 +1,7 @@
 import { Resource } from '@modelcontextprotocol/sdk/types.js';
 import { SlackMCPResource } from '../types/mcp.js';
 import { logger } from '../utils/logger.js';
+import { SlackResources } from './slack.js';
 
 /**
  * Resource registry for MCP resources
@@ -85,9 +86,33 @@ export class ResourceRegistry {
       }
     }, this.generateWorkspaceInfo.bind(this));
 
+    // Register Slack workspace resources (MCP-compliant replacements for tools)
+    this.registerSlackResources();
+
     logger.info('Built-in resources registered', {
       count: this.resources.size,
       resources: Array.from(this.resources.keys())
+    });
+  }
+
+  /**
+   * Register Slack workspace resources
+   */
+  private registerSlackResources(): void {
+    // Workspace channels resource (replaces list_channels tool)
+    this.registerResource(
+      SlackResources.createWorkspaceChannelsResource(),
+      this.generateSlackWorkspaceChannels.bind(this)
+    );
+
+    // Workspace users resource (replaces list_users tool)
+    this.registerResource(
+      SlackResources.createWorkspaceUsersResource(),
+      this.generateSlackWorkspaceUsers.bind(this)
+    );
+
+    logger.info('Slack workspace resources registered', {
+      resources: ['slack://workspace/channels', 'slack://workspace/users']
     });
   }
 
@@ -126,29 +151,43 @@ export class ResourceRegistry {
   }
 
   /**
-   * Generate resource content
+   * Generate resource content (with dynamic URI support)
    */
   async generateResourceContent(uri: string): Promise<string> {
+    // FIRST: Check if this is a dynamic resource
+    const baseUri = uri.split('?')[0];
+    const isDynamicResource = baseUri.startsWith('slack://channels/') && baseUri.endsWith('/history');
+    
+    if (isDynamicResource) {
+      const channelId = SlackResources.extractChannelIdFromUri(baseUri);
+      if (channelId) {
+        const params = SlackResources.extractParamsFromUri(uri);
+        return await SlackResources.generateChannelHistoryContent(channelId, params);
+      }
+    }
+    
+    // Check for exact match for static resources
     const generator = this.generators.get(uri);
-    if (!generator) {
-      throw new Error(`No generator found for resource: ${uri}`);
+    if (generator) {
+      try {
+        logger.debug('Generating resource content', { uri });
+        const content = await generator();
+        logger.debug('Resource content generated successfully', { 
+          uri, 
+          contentLength: content.length 
+        });
+        return content;
+      } catch (error) {
+        logger.error('Failed to generate resource content', {
+          uri,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+        throw error;
+      }
     }
 
-    try {
-      logger.debug('Generating resource content', { uri });
-      const content = await generator();
-      logger.debug('Resource content generated successfully', { 
-        uri, 
-        contentLength: content.length 
-      });
-      return content;
-    } catch (error) {
-      logger.error('Failed to generate resource content', {
-        uri,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-      throw error;
-    }
+    // If we reach here, no static or dynamic resource found
+    throw new Error(`No generator found for resource: ${uri}`);
   }
 
   /**
@@ -308,5 +347,23 @@ export class ResourceRegistry {
     };
 
     return JSON.stringify(info, null, 2);
+  }
+
+  /**
+   * Generate Slack workspace channels content
+   */
+  private async generateSlackWorkspaceChannels(): Promise<string> {
+    // Extract query parameters if any (for future URL-based filtering)
+    const params: Record<string, string> = {};
+    return await SlackResources.generateWorkspaceChannelsContent(params);
+  }
+
+  /**
+   * Generate Slack workspace users content
+   */
+  private async generateSlackWorkspaceUsers(): Promise<string> {
+    // Extract query parameters if any (for future URL-based filtering)
+    const params: Record<string, string> = {};
+    return await SlackResources.generateWorkspaceUsersContent(params);
   }
 }

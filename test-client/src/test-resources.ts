@@ -156,11 +156,179 @@ async function testResources() {
       }
     }
 
+    // Test dynamic resources (channel history)
+    console.log('\n' + '='.repeat(50));
+    console.log('Testing Dynamic Resources');
+    console.log('='.repeat(50));
+
+    // Get a channel ID from workspace channels for testing
+    const channelsResource = resources.find((r) => r.uri === 'slack://workspace/channels');
+    if (channelsResource) {
+      console.log('\n📖 Getting channel ID for dynamic resource testing...');
+      try {
+        const channelsContent = await client.readResource({ uri: channelsResource.uri });
+        
+        if (channelsContent.contents?.[0]) {
+          const channelsText = (channelsContent.contents[0] as any).text as string;
+          const channelsData = JSON.parse(channelsText);
+          
+          if (channelsData.success && channelsData.channels.length > 0) {
+            const testChannelId = channelsData.channels[0].id;
+            const testChannelName = channelsData.channels[0].name;
+            
+            console.log(`✅ Using channel: ${testChannelName} (${testChannelId})\n`);
+            
+            // Test dynamic channel history resource
+            const dynamicUri = `slack://channels/${testChannelId}/history`;
+            console.log(`🧪 Testing dynamic resource: ${dynamicUri}`);
+            
+            try {
+              const historyContent = await client.readResource({ uri: dynamicUri });
+              console.log('✅ Dynamic resource read successful');
+              
+              if (historyContent.contents?.[0]) {
+                const historyText = (historyContent.contents[0] as any).text as string;
+                const historyData = JSON.parse(historyText);
+                
+                console.log(`  Channel: ${historyData.channel}`);
+                console.log(`  Success: ${historyData.success}`);
+                console.log(`  Messages: ${historyData.messages?.length || 0}`);
+                
+                if (historyData.messages && historyData.messages.length > 0) {
+                  console.log('  Sample message:', historyData.messages[0].text || `[${historyData.messages[0].type}]`);
+                }
+              }
+            } catch (error) {
+              console.log('❌ Dynamic resource failed:', error instanceof Error ? error.message : error);
+            }
+            
+            // Test with parameters
+            const paramUri = `${dynamicUri}?limit=3`;
+            console.log(`\n🧪 Testing with parameters: ${paramUri}`);
+            
+            try {
+              const paramContent = await client.readResource({ uri: paramUri });
+              console.log('✅ Parameterized resource read successful');
+              
+              if (paramContent.contents?.[0]) {
+                const paramText = (paramContent.contents[0] as any).text as string;
+                const paramData = JSON.parse(paramText);
+                console.log(`  Limited messages: ${paramData.messages?.length || 0}`);
+                console.log(`  Parameters: ${JSON.stringify(paramData.parameters || {})}`);
+              }
+            } catch (error) {
+              console.log('❌ Parameterized resource failed:', error instanceof Error ? error.message : error);
+            }
+          }
+        }
+      } catch (error) {
+        console.log('❌ Could not get channel for dynamic testing:', error instanceof Error ? error.message : error);
+      }
+    }
+
     await client.close();
+    
+    // Additional integrated testing - direct ResourceRegistry access
+    console.log('\n==================================================');
+    console.log('Integrated Dynamic Resource Testing (Direct Access)');
+    console.log('==================================================\n');
+    
+    await testIntegratedDynamic();
+    
     console.log('\n🎯 Resources testing complete!');
   } catch (error) {
     console.error('❌ Resources test failed:', error instanceof Error ? error.message : error);
     process.exit(1);
+  }
+}
+
+/**
+ * Integrated Dynamic Resource Test - Direct ResourceRegistry access
+ * Tests ResourceRegistry directly without MCP client subprocess
+ */
+async function testIntegratedDynamic() {
+  try {
+    // Import ResourceRegistry dynamically to avoid module conflicts
+    const { ResourceRegistry } = await import('../../dist/resources/index.js');
+    
+    console.log('🔧 Creating ResourceRegistry directly...');
+    const registry = new ResourceRegistry();
+    console.log('✅ ResourceRegistry created\n');
+
+    // Test 1: Static resource (baseline)
+    console.log('🧪 Test 1: Static Resource (Direct)');
+    const staticUri = 'slack://workspace/channels';
+    console.log('URI:', staticUri);
+    
+    try {
+      const staticContent = await registry.generateResourceContent(staticUri);
+      const staticData = JSON.parse(staticContent);
+      console.log('✅ Direct static resource: SUCCESS');
+      console.log('  Channels found:', staticData.channels?.length || 0);
+    } catch (error) {
+      console.log('❌ Direct static resource: FAIL -', (error as Error).message);
+      return;
+    }
+
+    // Test 2: Dynamic resource (target)
+    console.log('\n🧪 Test 2: Dynamic Resource (Direct)');
+    const dynamicUri = 'slack://channels/C07UMQ2PR1V/history';
+    console.log('URI:', dynamicUri);
+    
+    try {
+      const dynamicContent = await registry.generateResourceContent(dynamicUri);
+      const dynamicData = JSON.parse(dynamicContent);
+      console.log('✅ Direct dynamic resource: SUCCESS');
+      console.log('  Success:', dynamicData.success);
+      console.log('  Messages:', dynamicData.messages?.length || 0);
+      console.log('  Channel:', dynamicData.channel);
+      
+      if (dynamicData.messages && dynamicData.messages.length > 0) {
+        console.log('  Sample message:', dynamicData.messages[0].text || `[${dynamicData.messages[0].type}]`);
+      }
+    } catch (error) {
+      console.log('❌ Direct dynamic resource: FAIL -', (error as Error).message);
+    }
+
+    // Test 3: Dynamic resource với parameters
+    console.log('\n🧪 Test 3: Dynamic Resource with Parameters (Direct)');
+    const paramUri = 'slack://channels/C07UMQ2PR1V/history?limit=2';
+    console.log('URI:', paramUri);
+    
+    try {
+      const paramContent = await registry.generateResourceContent(paramUri);
+      const paramData = JSON.parse(paramContent);
+      console.log('✅ Direct parameterized resource: SUCCESS');
+      console.log('  Messages returned:', paramData.messages?.length || 0);
+      console.log('  Parameters applied:', JSON.stringify(paramData.parameters || {}));
+    } catch (error) {
+      console.log('❌ Direct parameterized resource: FAIL -', (error as Error).message);
+    }
+
+    // Test 4: Error handling
+    console.log('\n🧪 Test 4: Error Handling (Direct)');
+    const invalidUri = 'slack://channels/INVALID123/history';
+    console.log('URI:', invalidUri);
+    
+    try {
+      const errorContent = await registry.generateResourceContent(invalidUri);
+      const errorData = JSON.parse(errorContent);
+      
+      if (errorData.success === false) {
+        console.log('✅ Direct error handling: SUCCESS');
+        console.log('  Error message:', errorData.error);
+      } else {
+        console.log('⚠️ Expected error but got success');
+      }
+    } catch (error) {
+      console.log('✅ Direct error handling: SUCCESS (threw exception)');
+      console.log('  Error:', (error as Error).message);
+    }
+
+    console.log('\n🎯 Integrated dynamic resource test completed!');
+
+  } catch (error) {
+    console.error('❌ Integrated test failed:', (error as Error).message);
   }
 }
 
