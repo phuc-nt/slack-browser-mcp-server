@@ -2,81 +2,100 @@
 
 > **AI Assistants meets Slack** - Tích hợp Claude với Slack workspace mà không cần permissions
 
-[![Status](https://img.shields.io/badge/Status-Planning-blue)](#current-status)
-[![Phase](https://img.shields.io/badge/Phase-1%20Foundation-orange)](#roadmap)
+[![Status](https://img.shields.io/badge/Status-Phase%202%20Complete-success)](#current-status)
+[![Phase](https://img.shields.io/badge/Phase-2%20Slack%20Integration-green)](#roadmap)
+[![Tools](https://img.shields.io/badge/Tools-6%20Working-blue)](#features)
+[![Resources](https://img.shields.io/badge/Resources-12%20Available-blue)](#features)
 [![License](https://img.shields.io/badge/License-MIT-green)](#license)
 
 ## 🚀 What is this?
 
 **Slack MCP Server** cho phép AI assistants (như Claude) tương tác trực tiếp với Slack workspaces sử dụng **browser tokens** - không cần cài đặt app hay xin phép admin.
 
-### ⚡ Key Features
-- 🕵️ **Stealth Mode**: Browser token authentication (xoxc/xoxd)
-- 🔧 **MCP Compliant**: Full Model Context Protocol support  
-- 💬 **Complete Slack Access**: Read, search, post messages
-- ⚡ **High Performance**: Intelligent caching system
-- 🖥️ **Claude Desktop Ready**: Seamless integration
+### 🎯 Production Ready Features
 
-## 📊 Current Status
+- ✅ **6 MCP Tools** - Complete messaging operations (post, reply, update, delete) 
+- ✅ **12 MCP Resources** - Workspace data với advanced search
+- ✅ **Browser Token Auth** - Stealth authentication (xoxc/xoxd)
+- ✅ **Full MCP Compliance** - Proper Tools vs Resources separation
+- ✅ **Dynamic Resources** - Parameterized URIs với real-time data
+- ✅ **Real API Integration** - Tested với live Slack workspaces
+- ✅ **Claude Desktop Ready** - Complete MCP protocol support
 
-**Phase 1: Foundation** (Aug 5-18, 2025)
-- ✅ **Week 1**: Project setup & MCP server core _(COMPLETED)_
-- 📋 **Week 2**: Tool architecture & development environment
+## 🏆 Current Status
 
-> ✅ **Project Status**: Foundation established - MCP server ready  
-> 📖 **Start Here**: [docs/START_POINT.md](docs/START_POINT.md)
+**✅ Phase 2 COMPLETED** (Aug 6, 2025) - **Full Slack Integration Achieved!**
 
-## 🏗️ Tech Stack
+### What's Working Now:
 
-```yaml
-Language: TypeScript/Node.js
-Protocol: Model Context Protocol (MCP)
-Transport: Stdio (Claude Desktop)
-Auth: Browser Tokens (xoxc + xoxd)
-Performance: Intelligent caching
-```
+#### 🔧 **6 MCP Tools Available:**
+- `ping` - System connectivity test
+- `echo` - System echo test  
+- `post_message` - Post messages to channels
+- `post_thread_reply` - Reply to message threads
+- `update_message` - Update/edit existing messages
+- `delete_message` - Delete messages
 
-## 📚 Documentation
+#### 📊 **12 MCP Resources Available:**
+- `slack://system/status` - Server status monitoring
+- `slack://system/info` - Server information
+- `slack://tools/registry` - Tool registry information  
+- `slack://system/metrics` - Performance metrics
+- `slack://workspace/info` - Workspace information
+- `slack://workspace/channels` - All workspace channels
+- `slack://workspace/users` - All workspace users
+- `slack://channels/{channelId}/history` - Channel message history (dynamic)
+- `slack://workspace/search` - Global workspace search
+- `slack://search/messages` - Message search với filters
+- `slack://search/users` - User search by name/email
+- `slack://search/channels` - Channel search by name/purpose
 
-- **[📍 START HERE](docs/START_POINT.md)** - Project hub & current status
-- **[🗺️ Roadmap](docs/01_preparation/project_roadmap.md)** - Phases & timeline
-- **[📋 Current Sprint](docs/02_implementation/sprints/sprint_1_1.md)** - Week 1 tasks
-- **[🔧 Implementation](docs/00_context/implementation-detail.md)** - Technical specs
+> 🎯 **Ready for Production**: All features tested với real Slack API integration
 
 ## 🚀 Quick Start
 
-### For Users
-```bash
-# Coming soon - Slack integration not ready yet
-# Current: Basic MCP server foundation available
-```
+### Installation
 
-### For Developers
 ```bash
-# Clone and setup
-git clone <repo-url>
+# Clone repository
+git clone https://github.com/phuc-nt/slack-browser-mcp-server
 cd slack-browser-mcp-server
+
+# Install dependencies
 npm install
 
 # Build project
 npm run build
-
-# Run development server
-npm run dev
-
-# Run built server  
-npm start
 ```
 
+### Setup Slack Authentication
+
+1. **Get Browser Tokens** từ Slack web app:
+   ```bash
+   # Copy from browser localStorage/cookies
+   cp test-client/.env.example test-client/.env
+   # Edit with your tokens: SLACK_USER_TOKEN_XOXC, SLACK_COOKIE_D
+   ```
+
+2. **Test Connection**:
+   ```bash
+   cd test-client && npm install
+   npx tsx src/test-connection.ts
+   ```
+
 ### Claude Desktop Integration
+
+Add to `~/.config/claude-desktop/config.json`:
+
 ```json
-// Add to ~/.config/claude-desktop/config.json
 {
   "mcpServers": {
     "slack-browser-mcp-server": {
       "command": "node",
       "args": ["/path/to/slack-browser-mcp-server/dist/index.js"],
       "env": {
+        "SLACK_USER_TOKEN_XOXC": "xoxc-your-token",
+        "SLACK_COOKIE_D": "your-d-cookie",
         "LOG_LEVEL": "info"
       }
     }
@@ -84,20 +103,127 @@ npm start
 }
 ```
 
+Restart Claude Desktop và bạn sẽ thấy 6 tools + 12 resources available!
+
+## 📚 Key Documentation
+
+- **[📍 START HERE](docs/START_POINT.md)** - Project status & quick overview
+- **[🗺️ Complete Roadmap](docs/01_preparation/project_roadmap.md)** - Phases & achievements
+- **[🚀 Sprint 2.3 Results](docs/02_implementation/sprints/sprint_2_3.md)** - Latest implementation
+- **[🔧 Implementation Details](docs/00_context/implementation-detail.md)** - Technical specs
+
+## 🧪 Testing
+
+```bash
+# Test all functionality
+cd test-client
+
+# Basic connection test
+npx tsx src/test-connection.ts
+
+# Test all resources  
+npx tsx src/test-resources.ts
+
+# Test messaging tools
+npx tsx src/test-real-messaging.ts
+
+# Test search resources
+npx tsx src/test-search-resources.ts
+
+# Run complete test suite
+npx tsx src/run-all-tests.ts
+```
+
 ## 🎯 Roadmap
 
-| Phase | Duration | Status | Focus |
-|-------|----------|--------|-------|
-| **1. Foundation** | Aug 5-18 | 🔄 In Progress | MCP server core |
-| **2. Slack Integration** | Aug 19 - Sep 1 | 📋 Planned | Stealth auth & tools |
-| **3. Caching & Performance** | Sep 2-15 | 📋 Planned | Intelligent caching |
-| **4. Production Ready** | Sep 16-29 | 📋 Planned | Polish & release |
+| Phase | Duration | Status | Focus | Results |
+|-------|----------|--------|-------|---------|
+| **1. Foundation** | Aug 5-18 | ✅ **COMPLETED** | MCP server core | 2 tools, 5 resources |
+| **2. Slack Integration** | Aug 5-6 | ✅ **COMPLETED** | Full Slack integration | 6 tools, 12 resources |
+| **3. Caching & Performance** | Planned | 📋 Next | Intelligent caching | Performance optimization |
+| **4. Production Ready** | Planned | 📋 Future | Polish & release | Public release |
 
-## 🔐 Security Note
+## 🏗️ Architecture
 
-This project uses **browser token extraction** - tokens từ localStorage/cookies của Slack web app. Đây là stealth approach để bypass workspace restrictions.
+```yaml
+Tech Stack:
+  Language: TypeScript/Node.js
+  Protocol: Model Context Protocol (MCP) 
+  Transport: Stdio (Claude Desktop)
+  Authentication: Browser Tokens (xoxc + xoxd)
+  API Integration: Slack Web API với stealth mode
 
-⚠️ **Important**: Never commit tokens to code. Always use environment variables.
+MCP Implementation:
+  Tools: 6 action-based operations (POST/PUT/DELETE)
+  Resources: 12 read-only data sources (GET)
+  Dynamic Resources: Parameterized URIs với real-time data
+  Compliance: Full MCP specification adherence
+```
+
+## 💡 Usage Examples
+
+### Using với Claude Desktop
+
+```
+Human: List all channels in my workspace
+
+Claude: I'll get all channels using the slack://workspace/channels resource.
+[Shows all channels với names, types, member counts, topics]
+```
+
+```
+Human: Post a message "Hello team!" to #general channel  
+
+Claude: I'll use the post_message tool to send your message.
+[Message posted successfully với timestamp và channel confirmation]
+```
+
+```
+Human: Search for messages about "project updates"
+
+Claude: I'll search using slack://workspace/search?query=project%20updates
+[Returns relevant messages với context và timestamps]
+```
+
+## 🔐 Security & Privacy
+
+### Browser Token Extraction
+This project uses **browser token extraction** technique:
+- Extracts tokens từ Slack web app's localStorage/cookies
+- Bypasses workspace app installation restrictions  
+- Works với any Slack workspace bạn có access
+
+### Security Best Practices
+- ⚠️ **Never commit tokens** to version control
+- 🔒 **Use environment variables** cho sensitive data
+- 🕵️ **Stealth mode** - API calls mimic normal browser behavior
+- 🛡️ **Rate limiting** - Prevents API abuse
+
+## 🐛 Troubleshooting
+
+### Authentication Issues
+- **Invalid tokens**: Re-extract từ fresh browser session
+- **Expired tokens**: Slack session expired, login again  
+- **Network errors**: Check internet connection và corporate firewall
+
+### MCP Connection Issues
+- **Claude not showing tools**: Check `config.json` syntax và file paths
+- **Server not starting**: Run `npm run build` and check for compilation errors
+- **Permission errors**: Ensure file paths are correct và readable
+
+### API Rate Limiting
+- **429 errors**: Built-in rate limiting active, requests queued automatically
+- **Performance slow**: Consider implementing user/channel caching in Phase 3
+
+## 🤝 Contributing
+
+Project follows sprint-based development model:
+
+1. **Current**: Phase 2 COMPLETED - Full Slack integration  
+2. **Next**: Phase 3 - Caching & Performance optimization
+3. **Future**: Phase 4 - Production polish & release
+
+See [Project Roadmap](docs/01_preparation/project_roadmap.md) for detailed development plans.
 
 ## 📄 License
 
@@ -105,4 +231,6 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-*📅 Updated: 2025-08-05 | 🔄 Status: Project Initialization*
+**🎉 Phase 2 Achievement: Complete Slack integration với 6 tools + 12 resources!**
+
+*📅 Updated: 2025-08-06 | ✅ Status: Phase 2 Complete - Production Ready*
