@@ -94,6 +94,11 @@ export class ResourceRegistry {
       logger.warn('Failed to register search resources during construction', { error });
     });
 
+    // Register Thread resources (Sprint 3.1) - async
+    this.registerThreadResources().catch(error => {
+      logger.warn('Failed to register thread resources during construction', { error });
+    });
+
     logger.info('Built-in resources registered', {
       count: this.resources.size,
       resources: Array.from(this.resources.keys())
@@ -186,6 +191,45 @@ export class ResourceRegistry {
   }
 
   /**
+   * Register Thread resources (Sprint 3.1)
+   */
+  private async registerThreadResources(): Promise<void> {
+    try {
+      // Import thread resources
+      const { ThreadResources } = await import('./threads.js');
+      
+      // Workspace thread search resource
+      this.registerResource(
+        ThreadResources.createWorkspaceThreadsResource(),
+        this.generateWorkspaceThreads.bind(this)
+      );
+
+      // Advanced thread search resource
+      this.registerResource(
+        ThreadResources.createThreadSearchResource(),
+        this.generateAdvancedThreadSearch.bind(this)
+      );
+
+      // Note: Dynamic thread resources (channel threads, thread details, thread replies)
+      // are handled in generateResourceContent() method via URI routing
+
+      logger.info('Thread resources registered', {
+        resources: [
+          'slack://workspace/threads',
+          'slack://search/threads',
+          'slack://channels/{channelId}/threads (dynamic)',
+          'slack://threads/{thread_ts}/details (dynamic)',
+          'slack://threads/{thread_ts}/replies (dynamic)'
+        ]
+      });
+    } catch (error) {
+      logger.warn('Failed to register thread resources', {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+
+  /**
    * Register a resource with its generator
    */
   registerResource(resource: SlackMCPResource, generator: () => Promise<string>): void {
@@ -244,8 +288,41 @@ export class ResourceRegistry {
       }
     }
 
-    // SECOND: Check if this is a dynamic resource (actual channel IDs)
+    // FIRST-B: Check for parameterized static resources (search resources và thread resources)
     const baseUri = uri.split('?')[0];
+    const baseGenerator = this.generators.get(baseUri);
+    
+    if (baseGenerator) {
+      try {
+        logger.debug('Generating parameterized resource content', { uri, baseUri });
+        
+        // Special handling cho search và thread resources với parameters
+        if (baseUri === 'slack://workspace/threads' || baseUri === 'slack://search/threads') {
+          const content = await this.generateThreadResourcesWithParams(baseUri, uri);
+          return content;
+        } else if (baseUri.startsWith('slack://workspace/search') || baseUri.startsWith('slack://search/')) {
+          const content = await this.generateSearchResourcesWithParams(baseUri, uri);
+          return content;
+        }
+        
+        // Default behavior for other static resources
+        const content = await baseGenerator();
+        logger.debug('Parameterized resource content generated successfully', { 
+          uri, 
+          contentLength: content.length 
+        });
+        return content;
+      } catch (error) {
+        logger.error('Failed to generate parameterized resource content', {
+          uri,
+          baseUri,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+        throw error;
+      }
+    }
+
+    // SECOND: Check if this is a dynamic resource (actual channel IDs)
     const isDynamicResource = baseUri.startsWith('slack://channels/') && 
                              baseUri.endsWith('/history') && 
                              !baseUri.includes('{channelId}'); // Exclude template URI
@@ -274,6 +351,42 @@ export class ResourceRegistry {
         return await SearchResources.generateUserSearchContent(searchParams);
       } else if (baseUri === 'slack://search/channels') {
         return await SearchResources.generateChannelSearchContent(searchParams);
+      }
+    }
+
+    // FOURTH: Check for thread resources (Sprint 3.1)
+    const isThreadResource = baseUri.startsWith('slack://threads/') || 
+                             (baseUri.startsWith('slack://channels/') && baseUri.includes('/threads'));
+
+    if (isThreadResource) {
+      const { ThreadResources } = await import('./threads.js');
+      const threadParams = ThreadResources.extractThreadParamsFromUri(uri);
+      
+      // Thread details: slack://threads/{thread_ts}/details
+      if (baseUri.includes('/details')) {
+        const threadTs = ThreadResources.extractThreadTsFromUri(baseUri);
+        const channelId = ThreadResources.extractChannelFromThreadUri(uri) || undefined;
+        if (threadTs) {
+          return await ThreadResources.generateThreadDetailsContent(threadTs, channelId, threadParams);
+        }
+      }
+      
+      // Thread replies: slack://threads/{thread_ts}/replies
+      else if (baseUri.includes('/replies')) {
+        const threadTs = ThreadResources.extractThreadTsFromUri(baseUri);
+        const channelId = ThreadResources.extractChannelFromThreadUri(uri) || undefined;
+        if (threadTs && channelId) {
+          return await ThreadResources.generateThreadRepliesContent(threadTs, channelId, threadParams);
+        }
+      }
+      
+      // Channel threads: slack://channels/{channelId}/threads
+      else if (baseUri.includes('/threads') && !baseUri.includes('{channelId}')) {
+        const channelMatch = baseUri.match(/^slack:\/\/channels\/([^\/]+)\/threads$/);
+        if (channelMatch) {
+          const channelId = channelMatch[1];
+          return await ThreadResources.generateChannelThreadsContent(channelId, threadParams);
+        }
       }
     }
 
@@ -543,5 +656,65 @@ export class ResourceRegistry {
     return SearchResources.generateChannelSearchContent({
       query: undefined // Will be populated from URI parameters
     });
+  }
+
+  /**
+   * Generate workspace threads content (Sprint 3.1)
+   */
+  private async generateWorkspaceThreads(): Promise<string> {
+    const { ThreadResources } = await import('./threads.js');
+    
+    // Return usage example when called without parameters
+    return ThreadResources.generateWorkspaceThreadsContent({
+      query: undefined // Will be populated from URI parameters
+    });
+  }
+
+  /**
+   * Generate advanced thread search content (Sprint 3.1)
+   */
+  private async generateAdvancedThreadSearch(): Promise<string> {
+    const { ThreadResources } = await import('./threads.js');
+    
+    // Return usage example when called without parameters  
+    return ThreadResources.generateThreadSearchContent({
+      query: undefined // Will be populated from URI parameters
+    });
+  }
+
+  /**
+   * Generate thread resources với parameters từ URI
+   */
+  private async generateThreadResourcesWithParams(baseUri: string, fullUri: string): Promise<string> {
+    const { ThreadResources } = await import('./threads.js');
+    const params = ThreadResources.extractThreadParamsFromUri(fullUri);
+
+    if (baseUri === 'slack://workspace/threads') {
+      return ThreadResources.generateWorkspaceThreadsContent(params);
+    } else if (baseUri === 'slack://search/threads') {
+      return ThreadResources.generateThreadSearchContent(params);
+    }
+
+    throw new Error(`Unknown thread resource: ${baseUri}`);
+  }
+
+  /**
+   * Generate search resources với parameters từ URI
+   */
+  private async generateSearchResourcesWithParams(baseUri: string, fullUri: string): Promise<string> {
+    const { SearchResources } = await import('./search.js');
+    const params = SearchResources.extractSearchParamsFromUri(fullUri);
+
+    if (baseUri === 'slack://workspace/search') {
+      return SearchResources.generateWorkspaceSearchContent(params);
+    } else if (baseUri === 'slack://search/messages') {
+      return SearchResources.generateMessageSearchContent(params);
+    } else if (baseUri === 'slack://search/users') {
+      return SearchResources.generateUserSearchContent(params);
+    } else if (baseUri === 'slack://search/channels') {
+      return SearchResources.generateChannelSearchContent(params);
+    }
+
+    throw new Error(`Unknown search resource: ${baseUri}`);
   }
 }
