@@ -419,7 +419,7 @@ export class SearchResources {
     try {
       const urlObj = new URL(uri.replace('slack://', 'http://'));
       urlObj.searchParams.forEach((value, key) => {
-        params[key as keyof SearchParams] = value;
+        (params as any)[key] = value;
       });
     } catch (error) {
       logger.warn('Failed to parse search parameters', { uri, error });
