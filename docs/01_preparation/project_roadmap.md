@@ -127,23 +127,66 @@ gantt
 
 ---
 
-## ⚡ Phase 3: Caching & Performance � PLANNED
+## ⚡ Phase 3: Thread Features Enhancement � PLANNED
 
-**Duration**: Sep 2 - Sep 15 (2 weeks)  
-**Objective**: Intelligent caching system cho performance optimization  
+**Duration**: Aug 7 - Aug 17 (10 days - Thread-focused development)  
+**Objective**: Comprehensive thread management system với advanced features  
+**Reference**: [Thread Features Planning](../03_planning/thread_features_enhancement.md) | [Sprint 3.1 Details](../02_implementation/sprints/sprint_3_1.md)
+
+### Thread Enhancement Approach
+
+**Phase 3.1: Advanced Thread Resources** (Aug 7-9, 3 days)
+- 📋 **5 New Thread Resources** - Thread discovery và metadata
+- 📋 **Dynamic URI Routing** - Smart parameter extraction
+- 📋 **Real API Integration** - Live thread data from Slack
+- 📋 **Performance Optimization** - Sub-2s response times
+
+**Phase 3.2: Advanced Thread Tools** (Aug 10-13, 4 days)  
+- 📋 **8 Thread Management Tools** - Interactive thread operations
+- 📋 **Thread Context Tools** - Parent-child navigation
+- 📋 **Thread Summary Tools** - AI-powered thread analysis
+- 📋 **Bulk Thread Operations** - Efficient thread management
+
+**Phase 3.3: Thread Management System** (Aug 14-16, 3 days)
+- 📋 **Thread Workflow Tools** - Archive, promote, manage
+- 📋 **Integration Testing** - Complete system validation
+- 📋 **Performance Benchmarking** - Thread operation efficiency
+
+### Success Criteria
+
+- 📋 **13 New Thread Features** implemented và tested
+- 📋 **Sub-2s Thread Discovery** performance across channels
+- 📋 **Complete Thread Navigation** parent-child relationships
+- 📋 **Advanced Thread Search** với filtering capabilities
+
+### Key Deliverables
+
+- � **5 Thread Resources** - Complete thread data access
+- 📋 **8 Thread Tools** - Interactive thread management
+- 📋 **Thread Search System** - Advanced discovery capabilities
+- 📋 **Performance Optimization** - Efficient thread operations
+
+### Sprint Breakdown
+
+- **Sprint 3.1** (Aug 7-9): [Advanced Thread Resources](../02_implementation/sprints/sprint_3_1.md)
+- **Sprint 3.2** (Aug 10-13): Thread Management Tools Implementation  
+- **Sprint 3.3** (Aug 14-16): Thread Workflow & Integration Testing
+
+---
+
+## 🚀 Phase 4: Caching & Performance 📋 PLANNED
+
+**Duration**: Aug 18 - Aug 29 (12 days)  
+**Objective**: Intelligent caching system và performance optimization  
 **Reference**: [Caching Strategy](../00_context/about-caching.md) | [Cache Implementation](../00_context/implementation-detail.md#src-cache-manager-ts)
 
-### Planned Approach
+### Planned Deliverables
 
-- **Week 1 (Sep 2-8)**: User cache system
-  - 📋 Architecture design
-  - � Implementation và integration
-  - 📋 Basic testing
-
-- **Week 2 (Sep 9-15)**: Channel cache + optimization
-  - 📋 Channel metadata caching
-  - 📋 Message enrichment (ID → readable names)
-  - 📋 Performance benchmarking
+- 📋 **User Cache System**: Persistent user profile caching
+- 📋 **Channel Cache System**: Channel metadata caching  
+- 📋 **Message Enrichment**: Convert IDs to readable content
+- 📋 **Performance Optimization**: Response time và memory optimization
+- 📋 **API Rate Limiting**: Smart request batching and throttling
 
 ### Success Criteria
 
@@ -152,45 +195,10 @@ gantt
 - 📋 Human-readable messages với user names
 - 📋 Memory usage under 100MB cho typical workspaces
 
-### Key Deliverables
-
-- � **User cache system** - Persistent user profile caching
-- 📋 **Channel cache system** - Channel metadata caching
-- 📋 **Message enrichment** - Convert IDs to readable content
-- 📋 **Performance optimization** - Response time và memory optimization
-
 ### Sprint Breakdown
 
-- **Sprint 3.1** (Sep 2-8): [User Cache Implementation](../03_implementation/sprints/sprint_3_1.md)
-- **Sprint 3.2** (Sep 9-15): [Channel Cache & Message Enrichment](../03_implementation/sprints/sprint_3_2.md)
-
----
-
-## 🚀 Phase 4: Production Ready 📋 PLANNED
-
-**Duration**: Sep 16 - Sep 29 (2 weeks)  
-**Objective**: Polish implementation và prepare for public release  
-**Reference**: [Requirements Completion](../00_context/project-requirement.md#9-development-plan--implementation) | [Advanced Features](../00_context/implementation-detail.md#4-mcp-tools-implementation)
-
-### Planned Deliverables
-
-- 📋 **Advanced features**: Thread support, file handling
-- 📋 **Error recovery**: Robust error handling mechanisms
-- 📋 **Complete documentation**: User và developer guides
-- 📋 **Release package**: Distributable với installer
-- 📋 **Security audit**: Comprehensive security review
-
-### Success Criteria
-
-- 📋 Complete feature set as per SRS
-- 📋 Zero critical bugs in core functionality
-- 📋 5-minute onboarding documentation
-- 📋 Ready for public GitHub release
-
-### Sprint Breakdown
-
-- **Sprint 4.1** (Sep 16-22): [Advanced Features & Error Recovery](../03_implementation/sprints/sprint_4_1.md)
-- **Sprint 4.2** (Sep 23-29): [Documentation & Release Preparation](../03_implementation/sprints/sprint_4_2.md)
+- **Sprint 4.1** (Aug 18-24): User Cache & Message Enrichment Implementation
+- **Sprint 4.2** (Aug 25-29): Performance Optimization & API Rate Limiting
 
 ---
 
