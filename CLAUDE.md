@@ -1,10 +1,8 @@
 ## PHẦN 1: QUY TẮC CHUNG (Reusable across projects)
 
-## PHẦN 1: QUY TẮC CHUNG (Reusable across projects)
-
 ### Quy tắc cơ bản
 
-- **Luôn sử dụng tiếng Việt để trả lời** trừ khi user yêu cầu tiếng Anh cụ thể
+- **Luôn sử dụng tiếng Anh để trả lời**
 - Đọc project documentation trước khi bắt đầu bất kỳ task nào
 - Tuân thủ workflow đã được định nghĩa trong project
 

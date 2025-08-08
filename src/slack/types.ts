@@ -58,6 +58,12 @@ export interface SlackMessage {
     ts: string;
   }>;
   latest_reply?: string;  // Timestamp of latest reply in thread
+  reactions?: Array<{
+    name: string;
+    count: number;
+    users: string[];
+  }>;
+  reply_broadcast?: boolean;
 }
 
 export interface SlackConversationsListResponse extends SlackApiResponse {

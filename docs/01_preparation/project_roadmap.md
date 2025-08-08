@@ -141,11 +141,12 @@ gantt
 - 📋 **Real API Integration** - Live thread data from Slack
 - 📋 **Performance Optimization** - Sub-2s response times
 
-**Phase 3.2: Advanced Thread Tools** (Aug 10-13, 4 days)  
+**Phase 3.2: Advanced Thread Tools** (Aug 8-11, 4 days)  
 - 📋 **8 Thread Management Tools** - Interactive thread operations
-- 📋 **Thread Context Tools** - Parent-child navigation
-- 📋 **Thread Summary Tools** - AI-powered thread analysis
-- 📋 **Bulk Thread Operations** - Efficient thread management
+- 📋 **Navigation Tools** (2): get_thread_context, navigate_thread_replies
+- 📋 **Action Tools** (3): create_thread, resolve_thread, archive_thread
+- 📋 **Analysis Tools** (2): summarize_thread, get_thread_participants
+- 📋 **Bulk Operations** (1): bulk_thread_actions - Multi-thread management
 
 **Phase 3.3: Thread Management System** (Aug 14-16, 3 days)
 - 📋 **Thread Workflow Tools** - Archive, promote, manage
@@ -169,7 +170,7 @@ gantt
 ### Sprint Breakdown
 
 - **Sprint 3.1** (Aug 7-9): [Advanced Thread Resources](../02_implementation/sprints/sprint_3_1.md)
-- **Sprint 3.2** (Aug 10-13): Thread Management Tools Implementation  
+- **Sprint 3.2** (Aug 8-11): [Advanced Thread Tools](../02_implementation/sprints/sprint_3_2.md) - 8 thread management tools  
 - **Sprint 3.3** (Aug 14-16): Thread Workflow & Integration Testing
 
 ---

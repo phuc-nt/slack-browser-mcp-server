@@ -7,8 +7,34 @@ import {
   ToolExecutionResult,
 } from '../types/tools.js';
 import { PingTool, EchoTool } from './conversations.js';
-// import { ListChannelsTool, ListUsersTool, GetChannelHistoryTool } from './slack-tools.js'; // REMOVED: MCP-compliant - moved to Resources
 import { logger } from '../utils/logger.js';
+
+// Import messaging tools
+import { PostMessageTool, PostThreadReplyTool, UpdateMessageTool, DeleteMessageTool } from './messaging.js';
+
+// Import thread management tools
+import { 
+  GetThreadContextTool,
+  NavigateThreadRepliesTool,
+  CreateThreadTool,
+  ResolveThreadTool,
+  ArchiveThreadTool,
+  SummarizeThreadTool,
+  GetThreadParticipantsTool,
+  BulkThreadActionsTool
+} from './thread-tool-implementations.js';
+import { ThreadTools } from './threads.js';
+
+// Import workflow tools
+import { 
+  PromoteThreadTool,
+  EscalateThreadTool,
+  MergeThreadsTool,
+  SplitThreadTool,
+  ThreadWatcherTool,
+  ThreadMetricsTool
+} from './thread-workflow-implementations.js';
+import { ThreadWorkflowTools } from './thread-workflow.js';
 // Simple validation without Ajv for now
 
 /**
@@ -38,10 +64,6 @@ export class EnhancedToolFactory extends SlackToolFactory {
 
     // Register messaging tools (Sprint 2.3)
     try {
-      // Import messaging tools dynamically
-      const { PostMessageTool, PostThreadReplyTool, UpdateMessageTool, DeleteMessageTool } = 
-        require('./messaging.js');
-      
       const postMessageTool = new PostMessageTool();
       const postThreadReplyTool = new PostThreadReplyTool();
       const updateMessageTool = new UpdateMessageTool();
@@ -62,6 +84,82 @@ export class EnhancedToolFactory extends SlackToolFactory {
       });
     } catch (error) {
       logger.warn('Failed to register messaging tools', {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+
+    // Register Sprint 3.2 Thread Management Tools
+    try {
+      // Create tool instances with definitions
+      const getThreadContextTool = new GetThreadContextTool(ThreadTools.createGetThreadContextTool());
+      const navigateThreadRepliesTool = new NavigateThreadRepliesTool(ThreadTools.createNavigateThreadRepliesTool());
+      const createThreadTool = new CreateThreadTool(ThreadTools.createCreateThreadTool());
+      const resolveThreadTool = new ResolveThreadTool(ThreadTools.createResolveThreadTool());
+      const archiveThreadTool = new ArchiveThreadTool(ThreadTools.createArchiveThreadTool());
+      const summarizeThreadTool = new SummarizeThreadTool(ThreadTools.createSummarizeThreadTool());
+      const getThreadParticipantsTool = new GetThreadParticipantsTool(ThreadTools.createGetThreadParticipantsTool());
+      const bulkThreadActionsTool = new BulkThreadActionsTool(ThreadTools.createBulkThreadActionsTool());
+
+      // Register all thread tools
+      this.toolInstances.set(getThreadContextTool.getDefinition().name, getThreadContextTool);
+      this.toolInstances.set(navigateThreadRepliesTool.getDefinition().name, navigateThreadRepliesTool);
+      this.toolInstances.set(createThreadTool.getDefinition().name, createThreadTool);
+      this.toolInstances.set(resolveThreadTool.getDefinition().name, resolveThreadTool);
+      this.toolInstances.set(archiveThreadTool.getDefinition().name, archiveThreadTool);
+      this.toolInstances.set(summarizeThreadTool.getDefinition().name, summarizeThreadTool);
+      this.toolInstances.set(getThreadParticipantsTool.getDefinition().name, getThreadParticipantsTool);
+      this.toolInstances.set(bulkThreadActionsTool.getDefinition().name, bulkThreadActionsTool);
+
+      logger.info('Registered Sprint 3.2 thread management tools', {
+        tools: [
+          'get_thread_context',
+          'navigate_thread_replies',
+          'create_thread', 
+          'resolve_thread',
+          'archive_thread',
+          'summarize_thread',
+          'get_thread_participants',
+          'bulk_thread_actions'
+        ],
+        categories: ['navigation', 'actions', 'analysis', 'bulk']
+      });
+    } catch (error) {
+      logger.warn('Failed to register thread management tools', {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+
+    // Register Sprint 3.3 Thread Workflow Tools
+    try {
+      // Create workflow tool instances with definitions
+      const promoteThreadTool = new PromoteThreadTool(ThreadWorkflowTools.createPromoteThreadTool());
+      const escalateThreadTool = new EscalateThreadTool(ThreadWorkflowTools.createEscalateThreadTool());
+      const mergeThreadsTool = new MergeThreadsTool(ThreadWorkflowTools.createMergeThreadsTool());
+      const splitThreadTool = new SplitThreadTool(ThreadWorkflowTools.createSplitThreadTool());
+      const watchThreadTool = new ThreadWatcherTool(ThreadWorkflowTools.createThreadWatcherTool());
+      const analyzeThreadMetricsTool = new ThreadMetricsTool(ThreadWorkflowTools.createThreadMetricsTool());
+
+      // Register all workflow tools
+      this.toolInstances.set(promoteThreadTool.getDefinition().name, promoteThreadTool);
+      this.toolInstances.set(escalateThreadTool.getDefinition().name, escalateThreadTool);
+      this.toolInstances.set(mergeThreadsTool.getDefinition().name, mergeThreadsTool);
+      this.toolInstances.set(splitThreadTool.getDefinition().name, splitThreadTool);
+      this.toolInstances.set(watchThreadTool.getDefinition().name, watchThreadTool);
+      this.toolInstances.set(analyzeThreadMetricsTool.getDefinition().name, analyzeThreadMetricsTool);
+
+      logger.info('Registered Sprint 3.3 thread workflow tools', {
+        tools: [
+          'promote_thread',
+          'escalate_thread',
+          'merge_threads',
+          'split_thread',
+          'watch_thread',
+          'analyze_thread_metrics'
+        ],
+        categories: ['workflow', 'management', 'monitoring']
+      });
+    } catch (error) {
+      logger.warn('Failed to register thread workflow tools', {
         error: error instanceof Error ? error.message : 'Unknown error'
       });
     }

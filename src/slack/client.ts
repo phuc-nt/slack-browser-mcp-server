@@ -229,6 +229,132 @@ export class SlackClient {
   }
 
   /**
+   * Get conversation replies (thread replies)
+   */
+  async getConversationReplies(
+    channelId: string, 
+    threadTs: string, 
+    options?: { limit?: number; cursor?: string; inclusive?: boolean }
+  ): Promise<{ ok: boolean; messages?: SlackMessage[]; response_metadata?: { next_cursor?: string }; error?: string }> {
+    try {
+      const response = await this.makeRequest<any>('conversations.replies', {
+        channel: channelId,
+        ts: threadTs,
+        limit: options?.limit || 100,
+        cursor: options?.cursor,
+        inclusive: options?.inclusive !== false
+      });
+
+      return {
+        ok: response.ok,
+        messages: response.messages,
+        response_metadata: response.response_metadata,
+        error: response.error
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return {
+        ok: false,
+        error: `Failed to get conversation replies: ${errorMessage}`
+      };
+    }
+  }
+
+  /**
+   * Get conversation info
+   */
+  async getConversationInfo(channelId: string): Promise<{ ok: boolean; channel?: SlackChannel; error?: string }> {
+    try {
+      const response = await this.makeRequest<any>('conversations.info', {
+        channel: channelId
+      });
+
+      return {
+        ok: response.ok,
+        channel: response.channel,
+        error: response.error
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return {
+        ok: false,
+        error: `Failed to get conversation info: ${errorMessage}`
+      };
+    }
+  }
+
+  /**
+   * Add reaction to message
+   */
+  async addReaction(channelId: string, messageTs: string, reaction: string): Promise<{ ok: boolean; error?: string }> {
+    try {
+      const response = await this.makeRequest<any>('reactions.add', {
+        channel: channelId,
+        timestamp: messageTs,
+        name: reaction
+      });
+
+      return {
+        ok: response.ok,
+        error: response.error
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return {
+        ok: false,
+        error: `Failed to add reaction: ${errorMessage}`
+      };
+    }
+  }
+
+  /**
+   * Pin message
+   */
+  async pinMessage(channelId: string, messageTs: string): Promise<{ ok: boolean; error?: string }> {
+    try {
+      const response = await this.makeRequest<any>('pins.add', {
+        channel: channelId,
+        timestamp: messageTs
+      });
+
+      return {
+        ok: response.ok,
+        error: response.error
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return {
+        ok: false,
+        error: `Failed to pin message: ${errorMessage}`
+      };
+    }
+  }
+
+  /**
+   * Get permalink for message
+   */
+  async getPermalink(channelId: string, messageTs: string): Promise<{ ok: boolean; permalink?: string; error?: string }> {
+    try {
+      const response = await this.makeRequest<any>('chat.getPermalink', {
+        channel: channelId,
+        message_ts: messageTs
+      });
+
+      return {
+        ok: response.ok,
+        permalink: response.permalink,
+        error: response.error
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return {
+        ok: false,
+        error: `Failed to get permalink: ${errorMessage}`
+      };
+    }
+  }
+
+  /**
    * Test API connection
    */
   async testConnection(): Promise<boolean> {
