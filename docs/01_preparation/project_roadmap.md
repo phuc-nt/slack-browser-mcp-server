@@ -169,31 +169,43 @@ gantt
 
 ---
 
-## 🚀 Phase 4: Caching & Performance 📋 PLANNED
+## 🚀 Phase 4: Tool-Only Architecture 📋 PLANNED
 
-**Duration**: Aug 18 - Aug 29 (12 days)  
-**Objective**: Intelligent caching system và performance optimization  
-**Reference**: [Caching Strategy](../00_context/about-caching.md) | [Cache Implementation](../00_context/implementation-detail.md#src-cache-manager-ts)
+**Duration**: Aug 8-11 (4 days - Tool cleanup and conversion)  
+**Objective**: Convert to tool-only MCP server with 30 reliable working tools  
+**Reference**: [Phase 4 Plan](./phase_4_plan.md) | [Sprint 4.1 Details](../02_implementation/sprints/sprint_4_1.md)
 
-### Planned Deliverables
+### Key Deliverables
 
-- 📋 **User Cache System**: Persistent user profile caching
-- 📋 **Channel Cache System**: Channel metadata caching  
-- 📋 **Message Enrichment**: Convert IDs to readable content
-- 📋 **Performance Optimization**: Response time và memory optimization
-- 📋 **API Rate Limiting**: Smart request batching and throttling
+- 📋 **Tool Cleanup** - Remove 4 broken tools causing invalid_cursor errors
+- 📋 **Simple Data Tools** - 5 API-based data retrieval tools
+- 📋 **Simple Search Tools** - 4 comprehensive search tools  
+- 📋 **Tool-Only Server** - Complete resource system removal
+- 📋 **30 Working Tools** - All tools tested and reliable
 
 ### Success Criteria
 
-- 📋 90% reduction in API calls cho common operations
-- 📋 Sub-second response times cho cached data
-- 📋 Human-readable messages với user names
-- 📋 Memory usage under 100MB cho typical workspaces
+- 📋 **No Broken Tools** - Eliminate all invalid_cursor errors
+- 📋 **Tool-Only Architecture** - Zero resources, pure tool-based server
+- 📋 **API Integration** - Use documented working Slack API endpoints
+- 📋 **Performance** - Maintain or improve Phase 3 performance metrics
 
 ### Sprint Breakdown
 
-- **Sprint 4.1** (Aug 18-24): User Cache & Message Enrichment Implementation
-- **Sprint 4.2** (Aug 25-29): Performance Optimization & API Rate Limiting
+- **Sprint 4.1** (Aug 8): [Tool Cleanup & Broken Tool Removal](../02_implementation/sprints/sprint_4_1.md)
+- **Sprint 4.2** (Aug 9): [Simple Data Tools Implementation](../02_implementation/sprints/sprint_4_2.md)
+- **Sprint 4.3** (Aug 10): [Simple Search Tools Implementation](../02_implementation/sprints/sprint_4_3.md)
+- **Sprint 4.4** (Aug 11): [Tool-Only Architecture Completion](../02_implementation/sprints/sprint_4_4.md)
+
+### 🎯 Phase 4 Target Results:
+
+- **Working Tools**: 30 tools total (21 existing + 9 new)
+- **Tool Categories**: System (7), Messaging (4), Thread (4), Workflow (6), Data (5), Search (4)
+- **Resources**: 0 (complete removal of resource system)
+- **Architecture**: Pure tool-only MCP server
+- **Reliability**: 100% tool success rate (no broken tools)
+- **API Integration**: Based on documented working Slack API endpoints
+- **Documentation**: Complete [Sprint 4.1](../02_implementation/sprints/sprint_4_1.md), [Sprint 4.2](../02_implementation/sprints/sprint_4_2.md), [Sprint 4.3](../02_implementation/sprints/sprint_4_3.md), [Sprint 4.4](../02_implementation/sprints/sprint_4_4.md)
 
 ---
 
@@ -237,7 +249,26 @@ gantt
   - Performance benchmarking system: 84/100 score (GOOD - Production Ready)
   - Complete system integration với 20 total tools
 
-**🎯 Phase 3 Achievement: Complete thread management ecosystem với 19 features và production-ready performance!**
+**📋 Phase 4: Tool-Only Architecture (PLANNED)**
+
+- **📋 Sprint 4.1: Tool Cleanup & Broken Tool Removal (PLANNED Aug 8, 2025)**
+  - Remove 4 broken tools causing invalid_cursor errors
+  - Clean tool registry và remove dead cursor code
+  - Target: 21 working tools (down from 25)
+- **📋 Sprint 4.2: Simple Data Tools Implementation (PLANNED Aug 9, 2025)**  
+  - Implement 5 simple API-based data retrieval tools
+  - Replace removed resources with working tools
+  - Target: 26 working tools
+- **📋 Sprint 4.3: Simple Search Tools Implementation (PLANNED Aug 10, 2025)**
+  - Implement 4 comprehensive search tools
+  - Use documented working API endpoints
+  - Target: 30 working tools
+- **📋 Sprint 4.4: Tool-Only Architecture Completion (PLANNED Aug 11, 2025)**
+  - Remove all resources và ResourceRegistry
+  - Complete tool-only MCP server
+  - Final testing với 30 working tools
+
+**🎯 Phase 4 Goal: Tool-only architecture với 30 reliable, working tools và zero broken features!**
 
 ---
 
@@ -270,7 +301,7 @@ gantt
 ---
 
 _📅 **Update Schedule**: End of each phase và weekly during active development_  
-_📅 **Last Updated**: 2025-08-07 (Phase 3 COMPLETED - Complete Thread Management System with 84/100 Performance Score!)_
+_📅 **Last Updated**: 2025-08-08 (Phase 4 PLANNED - Tool-Only Architecture with Broken Tool Cleanup!)_
 
 ---
 
