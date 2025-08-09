@@ -168,17 +168,60 @@ class ComprehensiveToolTestSuite {
   }
 
   private async testSearchTools(): Promise<void> {
-    console.log('🔍 Testing Search Tools...');
+    console.log('🔍 Testing Enhanced Search Tools (Phase 6)...');
     
-    // Test search_channel_messages (only remaining search tool)
-    await this.testTool('search_channel_messages', {
-      channel: this.testConfig.messages.sample_thread.channel_id,
-      query: this.testConfig.messages.search_queries.channel_specific,
-      count: 3
-    }, 'Search messages in specific channel', {
+    // Test search_messages with basic query
+    await this.testTool('search_messages', {
+      query: this.testConfig.messages.search_queries.simple,
+      count: 5
+    }, 'Basic message search with search_messages', {
       expectedResponseType: 'json',
       expectSuccess: true,
-      expectedFields: ['channel', 'query', 'items']
+      expectedFields: ['query', 'total_results', 'messages']
+    });
+
+    // Test search_messages with advanced operators
+    await this.testTool('search_messages', {
+      query: `in:${this.testConfig.channels.public.name} ${this.testConfig.messages.search_queries.channel_specific}`,
+      count: 3,
+      highlight: true
+    }, 'Advanced message search with channel operator', {
+      expectedResponseType: 'json',
+      expectSuccess: true,
+      expectedFields: ['query', 'messages', 'pagination']
+    });
+
+    // Test search_messages with user operator
+    await this.testTool('search_messages', {
+      query: `from:@${this.testConfig.users.test_user.name} test`,
+      count: 2
+    }, 'Message search with user operator', {
+      expectedResponseType: 'json',
+      expectSuccess: true,
+      expectedFields: ['query', 'total_results']
+    });
+
+    // Test search_files
+    await this.testTool('search_files', {
+      query: 'document OR pdf OR image',
+      count: 5,
+      sort: 'timestamp'
+    }, 'File search for documents and images', {
+      expectedResponseType: 'json',
+      expectSuccess: true,
+      expectedFields: ['query', 'files', 'total_results']
+    });
+
+    // Test search_files with specific file type
+    await this.testTool('search_files', {
+      query: '.pdf OR .docx',
+      count: 3,
+      sort: 'score',
+      highlight: true
+    }, 'File search for specific document types', {
+      expectedResponseType: 'json',
+      expectSuccess: true,
+      expectedFields: ['query', 'files']
     });
   }
 
@@ -409,11 +452,11 @@ class ComprehensiveToolTestSuite {
     const failedTests = this.results.filter(r => r.status === 'FAIL').length;
     const skippedTests = this.results.filter(r => r.status === 'SKIP').length;
     
-    // Group results by tool category - Phase 5 Production Tools
+    // Group results by tool category - Phase 6 Enhanced Search Tools
     const toolCategories = {
       messaging: ['post_message', 'update_message', 'delete_message', 'react_to_message'],
       data: ['get_thread_replies', 'list_workspace_channels', 'list_workspace_users'],
-      search: ['search_channel_messages'],
+      search: ['search_messages', 'search_files'],
       system: ['server_info']
     };
 

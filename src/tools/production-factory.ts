@@ -4,21 +4,21 @@ import { logger } from '../utils/logger.js';
 // Import core production tools only
 import { PostMessageTool, UpdateMessageTool, DeleteMessageTool } from './messaging.js';
 import { GetThreadRepliesTool, ListWorkspaceChannelsTool, ListWorkspaceUsersTool } from './data-tool-implementations.js';
-import { SearchChannelMessagesTool } from './data-tool-implementations.js';
+import { SearchMessagesTool, SearchFilesTool } from './enhanced-search-tools.js';
 import { ReactToMessageTool } from './reactions.js';
 import { ServerInfoTool } from './server-info.js';
 import { DataTools } from './data-tools.js';
 
 /**
- * Production Tool Factory - Phase 5 Streamlined Architecture
+ * Production Tool Factory - Phase 6 Enhanced Search Architecture
  * 
- * Registers exactly 9 core production tools:
+ * Registers exactly 10 core production tools:
  * - 4 Messaging tools
  * - 3 Data retrieval tools  
- * - 1 Search tool
+ * - 2 Enhanced search tools
  * - 1 System tool
  * 
- * All broken, duplicate, and unnecessary tools removed.
+ * Phase 6 enhancements: Advanced search with comprehensive query operators and file search.
  */
 export class ProductionToolFactory {
   private toolInstances: Map<string, BaseSlackTool> = new Map();
@@ -28,7 +28,7 @@ export class ProductionToolFactory {
   }
 
   /**
-   * Register the 9 core production tools
+   * Register the 10 core production tools (Phase 6)
    */
   private registerProductionTools(): void {
     try {
@@ -51,11 +51,12 @@ export class ProductionToolFactory {
         tools: ['get_thread_replies', 'list_workspace_channels', 'list_workspace_users']
       });
 
-      // Search Tools (1)
-      this.registerTool(new SearchChannelMessagesTool(DataTools.createSearchChannelMessagesTool()));
+      // Enhanced Search Tools (2) - Phase 6
+      this.registerTool(new SearchMessagesTool());
+      this.registerTool(new SearchFilesTool());
 
-      logger.info('Registered search tools', {
-        tools: ['search_channel_messages']
+      logger.info('Registered enhanced search tools', {
+        tools: ['search_messages', 'search_files']
       });
 
       // System Tools (1)
@@ -67,7 +68,7 @@ export class ProductionToolFactory {
 
       logger.info('Production tool factory initialized', {
         totalTools: this.toolInstances.size,
-        architecture: 'Phase 5 - Streamlined Production',
+        architecture: 'Phase 6 - Enhanced Search Integration',
         tools: Array.from(this.toolInstances.keys()).sort()
       });
 
@@ -110,7 +111,7 @@ export class ProductionToolFactory {
       categories: {
         messaging: 4,
         data: 3,
-        search: 1,
+        search: 2,
         system: 1
       },
       toolNames: Array.from(this.toolInstances.keys()).sort()
@@ -118,7 +119,7 @@ export class ProductionToolFactory {
   }
 
   /**
-   * Validate that exactly 9 tools are registered
+   * Validate that exactly 10 tools are registered (Phase 6)
    */
   validateConfiguration(): boolean {
     const expectedTools = [
@@ -126,8 +127,8 @@ export class ProductionToolFactory {
       'post_message', 'update_message', 'delete_message', 'react_to_message',
       // Data (3) 
       'get_thread_replies', 'list_workspace_channels', 'list_workspace_users',
-      // Search (1)
-      'search_channel_messages',
+      // Enhanced Search (2) - Phase 6
+      'search_messages', 'search_files',
       // System (1)
       'server_info'
     ];

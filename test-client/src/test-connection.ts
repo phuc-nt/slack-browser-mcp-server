@@ -162,15 +162,15 @@ class ConnectionTestSuite {
       });
       console.log('');
 
-      // Verify expected tools are present - Phase 5 Production Tools
+      // Verify expected tools are present - Phase 6 Enhanced Search Tools
       const toolNames = tools.tools.map(t => t.name);
       const expectedTools = [
         // Messaging (4)
         'post_message', 'update_message', 'delete_message', 'react_to_message',
         // Data (3) 
         'get_thread_replies', 'list_workspace_channels', 'list_workspace_users',
-        // Search (1)
-        'search_channel_messages',
+        // Enhanced Search (2)
+        'search_messages', 'search_files',
         // System (1)
         'server_info'
       ];
@@ -223,7 +223,7 @@ class ConnectionTestSuite {
       const toolsByExpectedCategory = {
         messaging: ['post_message', 'update_message', 'delete_message', 'react_to_message'],
         data: ['get_thread_replies', 'list_workspace_channels', 'list_workspace_users'],
-        search: ['search_channel_messages'],
+        search: ['search_messages', 'search_files'],
         system: ['server_info']
       };
 

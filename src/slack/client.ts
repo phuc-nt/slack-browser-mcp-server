@@ -531,6 +531,108 @@ export class SlackClient {
     return response;
   }
 
+  /**
+   * Search messages using search.messages API (Phase 6 Enhanced Search)
+   */
+  async searchMessagesAdvanced(params: {
+    query: string;
+    count?: number;
+    page?: number;
+    sort?: 'asc' | 'desc';
+    highlight?: boolean;
+    cursor?: string;
+  }): Promise<{
+    ok: boolean;
+    error?: string;
+    query?: string;
+    messages?: {
+      matches?: any[];
+      total?: number;
+      pagination?: {
+        page: number;
+        page_count: number;
+        per_page: number;
+        total_count: number;
+      };
+    };
+  }> {
+    const response = await this.makeRequest<{
+      ok: boolean;
+      error?: string;
+      query?: string;
+      messages?: {
+        matches?: any[];
+        total?: number;
+        pagination?: {
+          page: number;
+          page_count: number;
+          per_page: number;
+          total_count: number;
+        };
+      };
+    }>('search.messages', {
+      query: params.query,
+      count: params.count || 20,
+      page: params.page || 1,
+      sort: params.sort || 'desc',
+      highlight: params.highlight !== false ? true : false,
+      ...(params.cursor && { cursor: params.cursor })
+    });
+
+    return response;
+  }
+
+  /**
+   * Search files using search.files API (Phase 6 Enhanced Search)
+   */
+  async searchFiles(params: {
+    query: string;
+    count?: number;
+    page?: number;
+    sort?: 'score' | 'timestamp' | 'size';
+    sort_dir?: 'asc' | 'desc';
+    highlight?: boolean;
+  }): Promise<{
+    ok: boolean;
+    error?: string;
+    query?: string;
+    files?: {
+      matches?: any[];
+      total?: number;
+      pagination?: {
+        page: number;
+        page_count: number;
+        per_page: number;
+        total_count: number;
+      };
+    };
+  }> {
+    const response = await this.makeRequest<{
+      ok: boolean;
+      error?: string;
+      query?: string;
+      files?: {
+        matches?: any[];
+        total?: number;
+        pagination?: {
+          page: number;
+          page_count: number;
+          per_page: number;
+          total_count: number;
+        };
+      };
+    }>('search.files', {
+      query: params.query,
+      count: params.count || 20,
+      page: params.page || 1,
+      sort: params.sort || 'score',
+      sort_dir: params.sort_dir || 'desc',
+      highlight: params.highlight !== false ? true : false
+    });
+
+    return response;
+  }
+
   async testConnection(): Promise<boolean> {
     try {
       const response = await this.makeRequest<{ ok: boolean }>('auth.test');
