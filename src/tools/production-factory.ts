@@ -5,20 +5,22 @@ import { logger } from '../utils/logger.js';
 import { PostMessageTool, UpdateMessageTool, DeleteMessageTool } from './messaging.js';
 import { GetThreadRepliesTool, ListWorkspaceChannelsTool, ListWorkspaceUsersTool } from './data-tool-implementations.js';
 import { SearchMessagesTool, SearchFilesTool } from './enhanced-search-tools.js';
+import { CollectThreadsByTimeRangeTool } from './time-range-thread-collection.js';
 import { ReactToMessageTool } from './reactions.js';
 import { ServerInfoTool } from './server-info.js';
 import { DataTools } from './data-tools.js';
 
 /**
- * Production Tool Factory - Phase 6 Enhanced Search Architecture
+ * Production Tool Factory - Phase 6.2 Time-Range Thread Collection
  * 
- * Registers exactly 10 core production tools:
+ * Registers exactly 11 core production tools:
  * - 4 Messaging tools
  * - 3 Data retrieval tools  
  * - 2 Enhanced search tools
+ * - 1 Time-range thread collection tool (Sprint 6.2)
  * - 1 System tool
  * 
- * Phase 6 enhancements: Advanced search with comprehensive query operators and file search.
+ * Phase 6.2 enhancement: Time-range thread collection with 3-step process.
  */
 export class ProductionToolFactory {
   private toolInstances: Map<string, BaseSlackTool> = new Map();
@@ -28,7 +30,7 @@ export class ProductionToolFactory {
   }
 
   /**
-   * Register the 10 core production tools (Phase 6)
+   * Register the 11 core production tools (Phase 6.2)
    */
   private registerProductionTools(): void {
     try {
@@ -59,6 +61,13 @@ export class ProductionToolFactory {
         tools: ['search_messages', 'search_files']
       });
 
+      // Time-Range Thread Collection Tool (1) - Phase 6.2
+      this.registerTool(new CollectThreadsByTimeRangeTool());
+
+      logger.info('Registered time-range thread collection tool', {
+        tools: ['collect_threads_by_timerange']
+      });
+
       // System Tools (1)
       this.registerTool(new ServerInfoTool());
 
@@ -68,7 +77,7 @@ export class ProductionToolFactory {
 
       logger.info('Production tool factory initialized', {
         totalTools: this.toolInstances.size,
-        architecture: 'Phase 6 - Enhanced Search Integration',
+        architecture: 'Phase 6.2 - Time-Range Thread Collection',
         tools: Array.from(this.toolInstances.keys()).sort()
       });
 
@@ -112,6 +121,7 @@ export class ProductionToolFactory {
         messaging: 4,
         data: 3,
         search: 2,
+        collection: 1,
         system: 1
       },
       toolNames: Array.from(this.toolInstances.keys()).sort()
@@ -119,7 +129,7 @@ export class ProductionToolFactory {
   }
 
   /**
-   * Validate that exactly 10 tools are registered (Phase 6)
+   * Validate that exactly 11 tools are registered (Phase 6.2)
    */
   validateConfiguration(): boolean {
     const expectedTools = [
@@ -129,6 +139,8 @@ export class ProductionToolFactory {
       'get_thread_replies', 'list_workspace_channels', 'list_workspace_users',
       // Enhanced Search (2) - Phase 6
       'search_messages', 'search_files',
+      // Time-Range Thread Collection (1) - Phase 6.2
+      'collect_threads_by_timerange',
       // System (1)
       'server_info'
     ];

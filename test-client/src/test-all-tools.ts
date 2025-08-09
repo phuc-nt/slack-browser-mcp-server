@@ -50,10 +50,11 @@ class ComprehensiveToolTestSuite {
     try {
       await this.setupMCPConnection();
       
-      // Test all tool categories - Phase 5 Production Tools Only
+      // Test all tool categories - Phase 6.2 Production Tools 
       await this.testBasicTools();
       await this.testDataRetrievalTools();
       await this.testSearchTools();
+      await this.testThreadCollectionTools();
       await this.testMessagingTools();
       await this.testSystemTools();
       
@@ -222,6 +223,59 @@ class ComprehensiveToolTestSuite {
       expectedResponseType: 'json',
       expectSuccess: true,
       expectedFields: ['query', 'files']
+    });
+  }
+
+  private async testThreadCollectionTools(): Promise<void> {
+    console.log('🧵 Testing Time-Range Thread Collection Tool (Phase 6.2)...');
+    
+    // Get current timestamp for time range testing
+    const currentTime = new Date();
+    const oneDayAgo = new Date(currentTime.getTime() - 24 * 60 * 60 * 1000);
+    const twoDaysAgo = new Date(currentTime.getTime() - 48 * 60 * 60 * 1000);
+    
+    // Test collect_threads_by_timerange with 24-hour range
+    await this.testTool('collect_threads_by_timerange', {
+      channel: this.testConfig.channels.public.id,
+      start_date: oneDayAgo.toISOString(),
+      end_date: currentTime.toISOString(),
+      include_parent: true,
+      include_metadata: true,
+      max_threads: 10
+    }, 'Collect threads from last 24 hours with metadata', {
+      expectedResponseType: 'json',
+      expectSuccess: true,
+      expectedFields: ['channel', 'time_range', 'collection_summary', 'threads', 'metadata']
+    });
+
+    // Test collect_threads_by_timerange with Unix timestamp format
+    const startTimestamp = Math.floor(twoDaysAgo.getTime() / 1000) + '.000000';
+    const endTimestamp = Math.floor(oneDayAgo.getTime() / 1000) + '.000000';
+    
+    await this.testTool('collect_threads_by_timerange', {
+      channel: this.testConfig.channels.public.id,
+      start_date: startTimestamp,
+      end_date: endTimestamp,
+      include_parent: false,
+      max_threads: 5
+    }, 'Collect threads with Unix timestamps (replies only)', {
+      expectedResponseType: 'json',
+      expectSuccess: true,
+      expectedFields: ['collection_summary', 'threads']
+    });
+
+    // Test collect_threads_by_timerange with minimal time range (likely no results)
+    const oneHourAgo = new Date(currentTime.getTime() - 60 * 60 * 1000);
+    
+    await this.testTool('collect_threads_by_timerange', {
+      channel: this.testConfig.channels.public.id,
+      start_date: oneHourAgo.toISOString(),
+      end_date: currentTime.toISOString(),
+      max_threads: 3
+    }, 'Collect threads from last hour (may return no results)', {
+      expectedResponseType: 'json',
+      expectSuccess: true,
+      expectedFields: ['collection_summary', 'threads']
     });
   }
 
@@ -452,11 +506,12 @@ class ComprehensiveToolTestSuite {
     const failedTests = this.results.filter(r => r.status === 'FAIL').length;
     const skippedTests = this.results.filter(r => r.status === 'SKIP').length;
     
-    // Group results by tool category - Phase 6 Enhanced Search Tools
+    // Group results by tool category - Phase 6.2 Time-Range Thread Collection
     const toolCategories = {
       messaging: ['post_message', 'update_message', 'delete_message', 'react_to_message'],
       data: ['get_thread_replies', 'list_workspace_channels', 'list_workspace_users'],
       search: ['search_messages', 'search_files'],
+      collection: ['collect_threads_by_timerange'],
       system: ['server_info']
     };
 

@@ -213,6 +213,64 @@ export class SlackClient {
   }
 
   /**
+   * Get conversation history with time range support and pagination
+   * Used for time-range thread collection (Sprint 6.2)
+   */
+  async getConversationHistoryWithTimeRange(
+    channelId: string, 
+    options: {
+      oldest?: string;
+      latest?: string;
+      inclusive?: boolean;
+      limit?: number;
+      cursor?: string;
+    }
+  ): Promise<{
+    ok: boolean;
+    messages?: SlackMessage[];
+    response_metadata?: { next_cursor?: string };
+    error?: string;
+  }> {
+    try {
+      const params: any = {
+        channel: channelId,
+        limit: options.limit || 999,
+        inclusive: options.inclusive !== false
+      };
+
+      if (options.oldest) {
+        params.oldest = options.oldest;
+      }
+
+      if (options.latest) {
+        params.latest = options.latest;
+      }
+
+      if (options.cursor) {
+        params.cursor = options.cursor;
+      }
+
+      const response = await this.makeRequest<SlackConversationsHistoryResponse>(
+        'conversations.history',
+        params
+      );
+
+      return {
+        ok: response.ok,
+        messages: response.messages,
+        response_metadata: response.response_metadata,
+        error: response.error
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return {
+        ok: false,
+        error: `Failed to get conversation history with time range: ${errorMessage}`
+      };
+    }
+  }
+
+  /**
    * Post message to channel
    */
   async postMessage(

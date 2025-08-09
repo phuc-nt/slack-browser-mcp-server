@@ -162,7 +162,7 @@ class ConnectionTestSuite {
       });
       console.log('');
 
-      // Verify expected tools are present - Phase 6 Enhanced Search Tools
+      // Verify expected tools are present - Phase 6.2 Time-Range Thread Collection
       const toolNames = tools.tools.map(t => t.name);
       const expectedTools = [
         // Messaging (4)
@@ -171,6 +171,8 @@ class ConnectionTestSuite {
         'get_thread_replies', 'list_workspace_channels', 'list_workspace_users',
         // Enhanced Search (2)
         'search_messages', 'search_files',
+        // Time-Range Thread Collection (1) - Phase 6.2
+        'collect_threads_by_timerange',
         // System (1)
         'server_info'
       ];
@@ -224,6 +226,7 @@ class ConnectionTestSuite {
         messaging: ['post_message', 'update_message', 'delete_message', 'react_to_message'],
         data: ['get_thread_replies', 'list_workspace_channels', 'list_workspace_users'],
         search: ['search_messages', 'search_files'],
+        collection: ['collect_threads_by_timerange'],
         system: ['server_info']
       };
 
