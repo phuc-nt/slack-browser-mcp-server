@@ -1,27 +1,27 @@
 # Sprint 6.1: Enhanced Search Tools Implementation
 
-**Duration**: Aug 12-14, 2025 (3 days)  
+**Duration**: Aug 12-13, 2025 (2 days)  
 **Phase**: 6 - Advanced Search Integration  
-**Focus**: Replace and enhance search capabilities với powerful search tools
+**Focus**: Replace search.inline và add file search capabilities
 
 ## 🎯 Sprint Goals
 
 ### Primary Objectives
 1. **Replace search.inline** với advanced search.messages API
-2. **Add universal search** với search.all endpoint  
-3. **Implement file search** với search.files endpoint
-4. **Enhanced tool descriptions** for AI Client optimal usage
+2. **Implement file search** với search.files endpoint
+3. **Enhanced tool descriptions** for AI Client optimal usage
+4. **Complete query pattern documentation** for search operators
 
 ### Success Criteria
-- ✅ 4 new search tools implemented và functional
+- ✅ 2 new search tools implemented và functional
 - ✅ search.inline replaced với search.messages (backward compatibility)
 - ✅ All search tools tested với real workspace data
-- ✅ Detailed tool descriptions for AI assistant usage
+- ✅ Comprehensive query pattern documentation for AI usage
 - ✅ Zero regression in existing functionality
 
 ## 📋 Implementation Plan
 
-### Task 1: Core Search Messages Tool (Day 1)
+### Task 1: Advanced Search Messages Tool (Day 1)
 **Tool**: `search_messages` (replaces `search_channel_messages`)
 
 **Implementation Details**:
@@ -40,50 +40,66 @@ interface SearchMessagesArgs {
 }
 ```
 
-**Advanced Query Operators Support**:
-- `in:channel_name` - Search trong channel cụ thể
-- `from:@user_id` - Search messages từ user cụ thể  
-- `from:botname` - Search messages từ bot cụ thể
-- Text search với boolean operators
+**Complete Query Pattern Documentation**:
+
+#### Basic Search Patterns:
+- `"error log"` - Simple text search
+- `"deployment failed"` - Multi-word phrases  
+- `"API OR database"` - Boolean OR logic
+- `"error AND production"` - Boolean AND logic
+- `"bug -resolved"` - Exclude terms with minus
+
+#### Channel-Specific Search:
+- `in:general "meeting notes"` - Search trong #general channel
+- `in:#random "lunch"` - Search với # prefix
+- `in:C1234567890 "update"` - Search với channel ID
+- `in:general in:random "announcement"` - Multiple channels
+
+#### User-Specific Search:  
+- `from:@john "deadline"` - Messages từ user John
+- `from:U1234567890 "completed"` - Messages từ user ID
+- `from:botname "alert"` - Messages từ bot
+- `from:@sarah to:@mike` - Conversation between users
+
+#### Time-Based Search:
+- `after:2025-08-01 "report"` - Messages sau ngày cụ thể
+- `before:2025-08-15 "bug"` - Messages trước ngày cụ thể  
+- `during:august "vacation"` - Messages trong tháng
+- `on:2025-08-10 "meeting"` - Messages trong ngày cụ thể
+
+#### Content-Type Search:
+- `has:link "documentation"` - Messages có links
+- `has:attachment "screenshot"` - Messages có file attachments
+- `has:reaction "celebration"` - Messages có reactions
+- `is:pinned "important"` - Pinned messages only
+
+#### Advanced Combinations:
+- `in:general from:@john after:2025-08-01 "deployment"` - Complex multi-criteria
+- `(urgent OR priority) AND in:alerts` - Grouped boolean logic  
+- `"server down" -scheduled` - Exclude planned maintenance
+- `has:attachment in:design "mockup"` - Files trong specific channel
 
 **Tool Description (AI-optimized)**:
 ```
-Search messages across the entire Slack workspace using advanced search operators. 
-This tool supports complex queries like 'in:general from:@john error log' to find 
-specific content. Use query operators: in:channel_name for channel-specific search, 
-from:@user_id for user-specific messages, or combine terms with boolean logic. 
+Advanced message search across the entire Slack workspace with powerful query operators. 
+Supports complex search patterns including:
+
+CHANNEL SEARCH: Use 'in:channel_name' to search specific channels (e.g., 'in:general meeting')
+USER SEARCH: Use 'from:@username' for user-specific messages (e.g., 'from:@john deployment')  
+TIME SEARCH: Use 'after:date', 'before:date', 'on:date' for time-based filtering
+CONTENT SEARCH: Use 'has:link', 'has:attachment', 'has:reaction' for content types
+BOOLEAN LOGIC: Use AND, OR, parentheses, and minus (-) for complex queries
+
+Examples:
+- 'in:general from:@sarah "project update"' - Find project updates from Sarah in #general
+- 'error AND production -scheduled' - Find production errors excluding scheduled events  
+- 'has:attachment in:design "mockup"' - Find design files with mockups
+- 'after:2025-08-01 (urgent OR priority)' - Find recent urgent messages
+
 Returns highlighted results with pagination support for large result sets.
 ```
 
-### Task 2: Universal Search Tool (Day 2)  
-**Tool**: `search_all`
-
-**Implementation Details**:
-```typescript
-// Tool: search_all
-// Endpoint: search.all
-// Purpose: Search both messages and files in one call
-
-interface SearchAllArgs {
-  query: string;           // Required: Search query
-  count?: number;          // Results per page (1-100, default 20)
-  page?: number;           // Page number (1-100, default 1) 
-  sort?: 'score' | 'timestamp';  // Sort by relevance or time
-  sort_dir?: 'asc' | 'desc';     // Sort direction
-  highlight?: boolean;     // Enable highlighting (default true)
-}
-```
-
-**Tool Description (AI-optimized)**:
-```
-Search both messages and files across the workspace in a single comprehensive search. 
-This tool finds text content in messages AND searches through uploaded documents, 
-images, and files. Use for broad searches when you're unsure if the information 
-is in a message or an attached document. Returns combined results with both 
-message text and file metadata, perfect for complete workspace knowledge discovery.
-```
-
-### Task 3: File-Specific Search Tool (Day 2)
+### Task 2: File-Specific Search Tool (Day 2)
 **Tool**: `search_files`
 
 **Implementation Details**:
@@ -103,60 +119,61 @@ interface SearchFilesArgs {
 ```
 
 **Supported File Types**:
-- Documents (PDF, Word, Excel, PowerPoint)
-- Images và media files (PNG, JPG, GIF, MP4)
-- Code files và snippets (JS, TS, Python, etc.)
-- Text files và logs
-- Any uploaded attachments
+- **Documents**: PDF, Word (.docx), Excel (.xlsx), PowerPoint (.pptx)
+- **Images**: PNG, JPG, GIF, WebP, SVG
+- **Media**: MP4, MOV, AVI (video), MP3, WAV (audio)
+- **Code Files**: JavaScript, TypeScript, Python, Java, C++, Go, etc.
+- **Text Files**: TXT, CSV, JSON, XML, YAML, Markdown
+- **Archives**: ZIP, RAR, TAR
+- **Any uploaded attachments** in workspace
+
+**File Search Query Patterns**:
+
+#### File Name Search:
+- `"specification.pdf"` - Exact file name
+- `"*.xlsx"` - All Excel files (if supported)
+- `"report"` - Files containing "report" in name
+- `"2025 budget"` - Files with multiple keywords in name
+
+#### Content Search (in supported file types):
+- `"database schema"` - Search inside document content
+- `"API endpoint"` - Technical terms in code/documentation
+- `"quarterly results"` - Business terms in reports
+
+#### File Type Filtering:
+- Combined với file extension patterns
+- Search by file categories (docs, images, code)
 
 **Tool Description (AI-optimized)**:
 ```
 Search specifically through files and documents uploaded to the workspace. 
-This tool searches file names, titles, and content within documents like PDFs, 
-Word docs, spreadsheets, presentations, and code files. Use when looking for 
-specific documents, technical specifications, presentations, or when you know 
-the information is likely in an uploaded file rather than a chat message.
-```
+This tool searches both file names and content within documents including:
 
-### Task 4: Workspace Search Tool (Day 3)
-**Tool**: `search_workspace` (enhanced version)
+FILE TYPES: PDF, Word, Excel, PowerPoint, images, code files, text files, and all attachments
+SEARCH SCOPE: File names, document content, metadata, and file descriptions
+USE CASES: Finding technical specifications, project documents, presentations, reports, or code files
 
-**Implementation Details**:
-```typescript
-// Tool: search_workspace  
-// Purpose: Intelligent workspace-wide search with auto-routing
+Examples:
+- 'specification.pdf' - Find specific PDF file
+- 'quarterly report' - Find reports containing quarterly data  
+- 'API documentation' - Find technical documentation files
+- 'budget 2025' - Find budget-related files for 2025
+- 'meeting notes' - Find uploaded meeting recordings or transcripts
 
-interface SearchWorkspaceArgs {
-  query: string;           // Required: Natural language search query
-  content_types?: ('messages' | 'files')[];  // Content types to search
-  include_bots?: boolean;  // Include bot messages (default false)
-  limit?: number;          // Max results (1-50, default 20)
-  context_channel?: string; // Scope search to channel context
-}
-```
-
-**Tool Description (AI-optimized)**:
-```
-Intelligent workspace search that automatically determines the best search strategy 
-based on your query. Searches across messages, files, and conversations using 
-natural language queries. This tool is ideal for exploratory searches when you're 
-not sure exactly what format the information is in. It combines results from 
-multiple sources and presents the most relevant content first.
+Perfect for document research, finding uploaded resources, and locating files 
+that contain specific technical or business information that wouldn't be in chat messages.
 ```
 
 ## 🔧 Technical Implementation
 
-### New Search Tool Factory
+### Enhanced Search Tool Factory
 ```typescript
-// src/tools/search-factory.ts
-export class EnhancedSearchFactory {
-  registerSearchTools(): BaseSlackTool[] {
-    return [
-      new SearchMessagesTool(),      // Replaces search_channel_messages
-      new SearchAllTool(),           // New universal search  
-      new SearchFilesTool(),         // New file search
-      new SearchWorkspaceTool()      // New intelligent search
-    ];
+// Update ProductionToolFactory to include enhanced search tools
+export class ProductionToolFactory {
+  private registerSearchTools(): void {
+    // Replace existing search tool với enhanced versions
+    this.registerTool(new SearchMessagesTool());  // Replaces search_channel_messages
+    this.registerTool(new SearchFilesTool());     // New file search capability
   }
 }
 ```
@@ -166,7 +183,6 @@ export class EnhancedSearchFactory {
 // src/slack/client.ts additions
 
 async searchMessages(params: SearchMessagesParams): Promise<SearchResponse>
-async searchAll(params: SearchAllParams): Promise<UniversalSearchResponse>  
 async searchFiles(params: SearchFilesParams): Promise<FileSearchResponse>
 ```
 
@@ -180,19 +196,19 @@ async searchFiles(params: SearchFilesParams): Promise<FileSearchResponse>
 
 ### Tool Count Update
 - **Before**: 9 production tools (1 search tool)
-- **After**: 12 production tools (4 search tools) 
-- **Net addition**: +3 tools, 1 replacement
+- **After**: 10 production tools (2 search tools) 
+- **Net addition**: +1 tool, 1 replacement
 
 ### Enhanced Capabilities
-1. **Advanced Query Operators**: Support for complex search expressions
-2. **Multi-Content Search**: Messages, files, và documents in one interface
-3. **AI-Optimized Descriptions**: Clear guidance for AI assistant usage
-4. **Better Performance**: More efficient APIs với pagination
+1. **Advanced Query Operators**: Support for complex search expressions với comprehensive patterns
+2. **File Search**: Dedicated file và document search capability
+3. **AI-Optimized Descriptions**: Detailed guidance for AI assistant usage
+4. **Better Performance**: More efficient APIs với enhanced features
 
 ### Backward Compatibility
-- Old `search_channel_messages` tool → deprecated gracefully
-- New `search_messages` provides same functionality + enhancements
-- Existing integrations continue working
+- Old `search_channel_messages` tool → replaced với `search_messages`
+- New `search_messages` provides same functionality + advanced operators
+- Existing integrations continue working với enhanced capabilities
 
 ## ⚠️ Risk Mitigation
 
@@ -230,16 +246,18 @@ async searchFiles(params: SearchFilesParams): Promise<FileSearchResponse>
 ## 📈 Success Metrics
 
 ### Functionality Metrics
-- ✅ All 4 search tools implemented
-- ✅ 100% test coverage for new search tools
+- ✅ Both search tools implemented và functional
+- ✅ 100% test coverage for enhanced search functionality
 - ✅ Performance targets: <500ms average response time
 - ✅ Zero regressions in existing tools
+- ✅ Complete query pattern documentation
 
 ### Quality Metrics
-- ✅ Detailed AI-friendly tool descriptions
+- ✅ Detailed AI-friendly tool descriptions với examples
+- ✅ Comprehensive query operator documentation
 - ✅ Comprehensive error handling
 - ✅ Consistent response formatting
-- ✅ Clear documentation và examples
+- ✅ Clear documentation và usage patterns
 
 ## 🔄 Integration với Existing Architecture
 
@@ -249,9 +267,9 @@ async searchFiles(params: SearchFilesParams): Promise<FileSearchResponse>
 const PHASE_6_TOOLS = {
   messaging: 4,    // No change
   data: 3,         // No change  
-  search: 4,       // Enhanced from 1 → 4
+  search: 2,       // Enhanced from 1 → 2
   system: 1        // No change
-  // Total: 12 tools
+  // Total: 10 tools
 };
 ```
 
@@ -263,4 +281,4 @@ const PHASE_6_TOOLS = {
 ---
 
 **Sprint 6.1 Status**: 📋 **PLANNED** - Ready for implementation  
-**Next**: Sprint 6.2 - AI-Optimized Search Integration với assistant.search.context
+**Phase 6 Complete**: Enhanced search capabilities with advanced query operators and file search

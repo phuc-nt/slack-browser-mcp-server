@@ -187,64 +187,45 @@ All Phase 2 objectives achieved! Complete Slack integration với messaging tool
 
 ---
 
-### 🔍 Phase 6: Advanced Search Integration (PLANNED)
+### 🔍 Phase 6: Enhanced Search Integration (PLANNED)
 
-#### 📋 Sprint 6.1: Enhanced Search Tools Implementation (PLANNED Aug 12-14, 2025)
+#### 📋 Sprint 6.1: Enhanced Search Tools Implementation (PLANNED Aug 12-13, 2025)
 
-**🎯 Replace search.inline with advanced search capabilities**
-
-**Key Objectives:**
-
-- **Search Enhancement**: Replace search.inline với search.messages API (advanced operators support)
-- **Universal Search**: Add search.all endpoint for combined message+file search
-- **File Search**: Implement search.files for document và attachment search
-- **AI-Optimized Descriptions**: Detailed tool descriptions for optimal AI Client usage
-
-**Enhanced Search Tools (4 total):**
-- **`search_messages`**: Advanced message search với query operators (replaces search_channel_messages)
-- **`search_all`**: Universal search cho both messages và files in one call
-- **`search_files`**: Dedicated file và document search capabilities
-- **`search_workspace`**: Intelligent workspace-wide search với auto-routing
-
-**Advanced Features:**
-- Query operators: `in:channel_name`, `from:@user_id`, `from:botname`
-- Multi-content search: Messages, files, documents, attachments
-- Enhanced pagination với cursor support
-- Highlighting và relevance scoring
-
-#### 📋 Sprint 6.2: AI-Optimized Search Integration (PLANNED Aug 15-16, 2025)
-
-**🎯 AI-assistant optimized search với contextual relevance**
+**🎯 Replace search.inline with advanced search capabilities and add file search**
 
 **Key Objectives:**
 
-- **AI-Optimized Search**: Implement assistant.search.context endpoint designed for Claude
-- **Contextual Search**: Channel-scoped intelligent search với conversation context
-- **Smart Routing**: Intelligent search routing với auto-method selection
-- **Search Analytics**: Query analysis và optimization suggestions
+- **Advanced Message Search**: Replace search.inline với search.messages API (comprehensive query operators)
+- **File Search**: Implement search.files for dedicated document và attachment search
+- **AI-Optimized Descriptions**: Detailed tool descriptions với complete query patterns for AI usage
+- **Enhanced Search Capabilities**: Advanced operators, highlighting, pagination support
 
-**AI-Enhanced Search Tools (4 additional):**
-- **`search_ai_context`**: AI-optimized search designed for Claude và AI assistants
-- **`search_channel_context`**: Channel-scoped search với conversation flow understanding
-- **`search_smart`**: Intelligent search routing (auto-selects best method)  
-- **`search_analytics`**: Search query analysis và optimization insights
+**Enhanced Search Tools (2 total):**
+- **`search_messages`**: Advanced message search với comprehensive query operators (replaces search_channel_messages)
+- **`search_files`**: Dedicated file và document search for all uploaded content
 
-**AI Integration Benefits:**
-- Natural language query support
-- Context-aware results với conversation understanding
-- Relevance ranking optimized for AI workflows
-- Enhanced metadata for better AI processing
+**Advanced Query Operators (search_messages)**:
+- **Channel Search**: `in:channel_name`, `in:#channel`, `in:C1234567890`
+- **User Search**: `from:@username`, `from:U1234567890`, `from:botname`  
+- **Time Search**: `after:2025-08-01`, `before:2025-08-15`, `on:2025-08-10`
+- **Content Search**: `has:link`, `has:attachment`, `has:reaction`, `is:pinned`
+- **Boolean Logic**: `AND`, `OR`, `()` grouping, `-` exclusion
+- **Complex Examples**: `in:general from:@john after:2025-08-01 "deployment"`
+
+**File Search Capabilities (search_files)**:
+- **Document Types**: PDF, Word, Excel, PowerPoint, images, code files
+- **Search Scope**: File names, document content, metadata
+- **Query Examples**: `"specification.pdf"`, `"quarterly report"`, `"API documentation"`
 
 #### 📋 Phase 6 Expected Results:
 
-- **Enhanced Tool Count**: 16 production tools (vs 9 in Phase 5)
-- **Search Capabilities**: 8 search tools (vs 1 in Phase 5) - 800% improvement
-- **AI-Optimized**: Designed specifically for Claude và AI assistant usage
-- **Advanced Features**: Query operators, contextual search, intelligent routing
-- **Multi-Modal Search**: Messages, files, documents, analytics in unified interface
-- **Performance**: <800ms response time for AI-optimized searches
+- **Enhanced Tool Count**: 10 production tools (vs 9 in Phase 5)
+- **Search Capabilities**: 2 specialized search tools (vs 1 basic in Phase 5)
+- **Advanced Features**: Comprehensive query operators, file search, AI-optimized descriptions
+- **Performance**: <500ms response time for enhanced searches
+- **AI Integration**: Detailed query patterns và examples for optimal AI assistant usage
 
-**Phase 6 Status**: 📋 **PLANNED** - Advanced search integration ready for implementation
+**Phase 6 Status**: 📋 **PLANNED** - Enhanced search integration ready for implementation
 
 ---
 
@@ -360,7 +341,7 @@ Cache: node-cache + file system
 - **Phase 3: Thread Management** ✅ COMPLETED (Sprint 3.3 COMPLETED Aug 7)
 - **Phase 4: Tool-Only Architecture** ✅ COMPLETED (Sprint 4.2 COMPLETED Aug 9)
 - **Phase 5: Production-Ready Streamlined Architecture** ✅ COMPLETED (Sprint 5.2 COMPLETED Aug 11)
-- **Phase 6: Advanced Search Integration** 📋 PLANNED (Sprint 6.2 PLANNED Aug 16)
+- **Phase 6: Enhanced Search Integration** 📋 PLANNED (Sprint 6.1 PLANNED Aug 13)
 
 ---
 
