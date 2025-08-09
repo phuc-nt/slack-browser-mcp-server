@@ -215,74 +215,9 @@ export class ThreadTools {
    * Navigation Tools (2 tools)
    */
   
-  static createGetThreadContextTool(): SlackTool {
-    return {
-      name: 'get_thread_context',
-      description: 'Get complete thread information with parent message and metadata',
-      category: ToolCategory.CONVERSATIONS,
-      inputSchema: {
-        type: 'object',
-        properties: {
-          thread_ts: { 
-            type: 'string', 
-            description: 'Thread timestamp (format: 1234567890.123456)' 
-          },
-          channel_id: { 
-            type: 'string', 
-            description: 'Channel ID containing the thread' 
-          },
-          include_reactions: { 
-            type: 'boolean', 
-            description: 'Include message reactions in response',
-            default: false
-          }
-        },
-        required: ['thread_ts', 'channel_id']
-      },
-      requiresAuth: true,
-      rateLimit: { maxCalls: 10, windowMs: 60000 }
-    };
-  }
 
-  static createNavigateThreadRepliesTool(): SlackTool {
-    return {
-      name: 'navigate_thread_replies',
-      description: 'Navigate through thread replies with pagination support',
-      category: ToolCategory.CONVERSATIONS,
-      inputSchema: {
-        type: 'object',
-        properties: {
-          thread_ts: { 
-            type: 'string', 
-            description: 'Thread timestamp' 
-          },
-          channel_id: { 
-            type: 'string', 
-            description: 'Channel ID containing thread' 
-          },
-          cursor: { 
-            type: 'string', 
-            description: 'Pagination cursor for navigation' 
-          },
-          limit: { 
-            type: 'number', 
-            description: 'Number of replies to return (1-100)',
-            default: 20,
-            minimum: 1,
-            maximum: 100
-          },
-          include_parent: {
-            type: 'boolean',
-            description: 'Include parent message in results',
-            default: true
-          }
-        },
-        required: ['thread_ts', 'channel_id']
-      },
-      requiresAuth: true,
-      rateLimit: { maxCalls: 20, windowMs: 60000 }
-    };
-  }
+
+
 
   /**
    * Action Tools (3 tools)
@@ -401,88 +336,9 @@ export class ThreadTools {
    * Analysis Tools (2 tools)
    */
 
-  static createSummarizeThreadTool(): SlackTool {
-    return {
-      name: 'summarize_thread',
-      description: 'Generate AI-powered summary of thread discussion',
-      category: ToolCategory.CONVERSATIONS,
-      inputSchema: {
-        type: 'object',
-        properties: {
-          thread_ts: { 
-            type: 'string', 
-            description: 'Thread timestamp to summarize' 
-          },
-          channel_id: { 
-            type: 'string', 
-            description: 'Channel ID containing thread' 
-          },
-          summary_style: { 
-            type: 'string', 
-            enum: ['brief', 'detailed', 'action_items'],
-            description: 'Style of summary to generate',
-            default: 'brief'
-          },
-          max_length: {
-            type: 'number',
-            description: 'Maximum summary length in characters',
-            default: 500,
-            minimum: 100,
-            maximum: 2000
-          },
-          focus_keywords: {
-            type: 'array',
-            items: { type: 'string' },
-            description: 'Keywords to focus the summary on'
-          }
-        },
-        required: ['thread_ts', 'channel_id']
-      },
-      requiresAuth: true,
-      rateLimit: { maxCalls: 10, windowMs: 60000 }
-    };
-  }
 
-  static createGetThreadParticipantsTool(): SlackTool {
-    return {
-      name: 'get_thread_participants',
-      description: 'Analyze thread participants and their contributions',
-      category: ToolCategory.CONVERSATIONS,
-      inputSchema: {
-        type: 'object',
-        properties: {
-          thread_ts: { 
-            type: 'string', 
-            description: 'Thread timestamp to analyze' 
-          },
-          channel_id: { 
-            type: 'string', 
-            description: 'Channel ID containing thread' 
-          },
-          include_stats: { 
-            type: 'boolean', 
-            description: 'Include detailed engagement statistics',
-            default: true
-          },
-          min_messages: {
-            type: 'number',
-            description: 'Minimum messages required to include participant',
-            default: 1,
-            minimum: 1
-          },
-          sort_by: {
-            type: 'string',
-            enum: ['messages', 'engagement', 'chronological'],
-            description: 'How to sort participants',
-            default: 'messages'
-          }
-        },
-        required: ['thread_ts', 'channel_id']
-      },
-      requiresAuth: true,
-      rateLimit: { maxCalls: 20, windowMs: 60000 }
-    };
-  }
+
+
 
   /**
    * Bulk Operations Tool (1 tool)
@@ -545,18 +401,10 @@ export class ThreadTools {
    */
   static getAllThreadTools(): SlackTool[] {
     return [
-      // Navigation tools
-      this.createGetThreadContextTool(),
-      this.createNavigateThreadRepliesTool(),
-      
       // Action tools
       this.createCreateThreadTool(),
       this.createResolveThreadTool(),
       this.createArchiveThreadTool(),
-      
-      // Analysis tools
-      this.createSummarizeThreadTool(),
-      this.createGetThreadParticipantsTool(),
       
       // Bulk operations
       this.createBulkThreadActionsTool()
@@ -568,18 +416,10 @@ export class ThreadTools {
    */
   static getThreadToolsByCategory(): Record<string, SlackTool[]> {
     return {
-      navigation: [
-        this.createGetThreadContextTool(),
-        this.createNavigateThreadRepliesTool()
-      ],
       actions: [
         this.createCreateThreadTool(),
         this.createResolveThreadTool(),
         this.createArchiveThreadTool()
-      ],
-      analysis: [
-        this.createSummarizeThreadTool(),
-        this.createGetThreadParticipantsTool()
       ],
       bulk: [
         this.createBulkThreadActionsTool()

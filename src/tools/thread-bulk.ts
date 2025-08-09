@@ -21,8 +21,6 @@ import {
 // Import individual tool implementations for delegation
 import { ResolveThreadTool } from './thread-actions.js';
 import { ArchiveThreadTool } from './thread-actions.js';
-import { SummarizeThreadTool } from './thread-analysis.js';
-import { GetThreadParticipantsTool } from './thread-analysis.js';
 
 /**
  * Tool 8: Bulk Thread Actions
@@ -32,8 +30,6 @@ export class BulkThreadActionsTool extends BaseThreadTool {
   
   private resolveThreadTool: ResolveThreadTool;
   private archiveThreadTool: ArchiveThreadTool;
-  private summarizeThreadTool: SummarizeThreadTool;
-  private getThreadParticipantsTool: GetThreadParticipantsTool;
 
   constructor(definition: any) {
     super(definition);
@@ -41,8 +37,6 @@ export class BulkThreadActionsTool extends BaseThreadTool {
     // Initialize individual tools for delegation
     this.resolveThreadTool = new ResolveThreadTool({} as any);
     this.archiveThreadTool = new ArchiveThreadTool({} as any);
-    this.summarizeThreadTool = new SummarizeThreadTool({} as any);
-    this.getThreadParticipantsTool = new GetThreadParticipantsTool({} as any);
   }
   
   async execute(args: BulkThreadActionsArgs, context: ToolContext): Promise<ToolExecutionResult> {
@@ -243,22 +237,16 @@ export class BulkThreadActionsTool extends BaseThreadTool {
           }, context);
 
         case 'summarize':
-          return await this.summarizeThreadTool.execute({
-            thread_ts: thread.thread_ts,
-            channel_id: thread.channel_id,
-            summary_style: args.parameters?.summary_style || 'brief',
-            max_length: args.parameters?.max_length || 500,
-            focus_keywords: args.parameters?.focus_keywords
-          }, context);
-
         case 'analyze':
-          return await this.getThreadParticipantsTool.execute({
-            thread_ts: thread.thread_ts,
-            channel_id: thread.channel_id,
-            include_stats: args.parameters?.include_stats !== false,
-            min_messages: args.parameters?.min_messages || 1,
-            sort_by: args.parameters?.sort_by || 'messages'
-          }, context);
+          return {
+            success: false,
+            error: `Action '${args.action}' is no longer supported (broken tool removed)`,
+            errorCode: 'UNSUPPORTED_ACTION',
+            metadata: {
+              processingTimeMs: Date.now() - startTime,
+              apiCallsUsed: 0
+            }
+          };
 
         default:
           return {
@@ -339,21 +327,12 @@ export class BulkThreadActionsTool extends BaseThreadTool {
         };
 
       case 'summarize':
-        return {
-          thread_ts: thread.thread_ts,
-          channel_id: thread.channel_id,
-          preview: true,
-          summary_style: parameters?.summary_style || 'brief',
-          would_generate_summary: true
-        };
-
       case 'analyze':
         return {
           thread_ts: thread.thread_ts,
           channel_id: thread.channel_id,
           preview: true,
-          would_analyze_participants: true,
-          would_include_stats: parameters?.include_stats !== false
+          error: `Action '${action}' is no longer supported (broken tool removed)`
         };
 
       default:
@@ -419,8 +398,8 @@ export class BulkThreadActionsTool extends BaseThreadTool {
 
     if (!args.action) {
       errors.push('action is required');
-    } else if (!['resolve', 'archive', 'summarize', 'analyze'].includes(args.action)) {
-      errors.push('action must be one of: resolve, archive, summarize, analyze');
+    } else if (!['resolve', 'archive'].includes(args.action)) {
+      errors.push('action must be one of: resolve, archive (summarize/analyze removed due to broken tools)');
     }
 
     if (!args.thread_list) {

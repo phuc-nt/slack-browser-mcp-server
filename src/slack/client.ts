@@ -59,24 +59,66 @@ export class SlackClient {
   /**
    * Get list of channels user has access to
    */
-  async getChannels(): Promise<SlackChannel[]> {
+  async getChannels(options?: {
+    exclude_archived?: boolean;
+    types?: string;
+    limit?: number;
+    cursor?: string;
+  }): Promise<SlackChannel[] | {
+    ok: boolean;
+    error?: string;
+    channels?: SlackChannel[];
+    response_metadata?: any;
+  }> {
     try {
+      const params: any = {
+        types: options?.types || 'public_channel,private_channel,mpim,im',
+        exclude_archived: options?.exclude_archived !== undefined ? options.exclude_archived : false,
+        limit: options?.limit || 1000,
+      };
+
+      if (options?.cursor) {
+        params.cursor = options.cursor;
+      }
+
       const response = await this.makeRequest<SlackConversationsListResponse>(
         'conversations.list',
-        {
-          types: 'public_channel,private_channel,mpim,im',
-          exclude_archived: false,
-          limit: 1000,
-        }
+        params
       );
 
       if (!response.ok) {
+        // If options are provided, return full response for tool compatibility
+        if (options) {
+          return {
+            ok: false,
+            error: response.error || 'Unknown error'
+          };
+        }
         throw new Error(`Slack API error: ${response.error || 'Unknown error'}`);
       }
 
+      // If options are provided, return full response for tool compatibility
+      if (options) {
+        return {
+          ok: true,
+          channels: response.channels || [],
+          response_metadata: response.response_metadata
+        };
+      }
+
+      // For backwards compatibility, return just channels array when no options
       return response.channels || [];
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      // If options are provided, return error response for tool compatibility
+      if (options) {
+        return {
+          ok: false,
+          error: `Failed to get channels: ${errorMessage}`
+        };
+      }
+      
       throw new Error(`Failed to get channels: ${errorMessage}`);
     }
   }
@@ -84,19 +126,64 @@ export class SlackClient {
   /**
    * Get list of users in workspace
    */
-  async getUsers(): Promise<SlackUser[]> {
+  async getUsers(options?: {
+    include_locale?: boolean;
+    limit?: number;
+    cursor?: string;
+  }): Promise<SlackUser[] | {
+    ok: boolean;
+    error?: string;
+    members?: SlackUser[];
+    response_metadata?: any;
+  }> {
     try {
-      const response = await this.makeRequest<SlackUsersListResponse>('users.list', {
-        limit: 1000,
-      });
+      const params: any = {
+        limit: options?.limit || 1000,
+      };
+
+      if (options?.include_locale) {
+        params.include_locale = options.include_locale;
+      }
+
+      if (options?.cursor) {
+        params.cursor = options.cursor;
+      }
+
+      const response = await this.makeRequest<SlackUsersListResponse>('users.list', params);
 
       if (!response.ok) {
+        // If options are provided, return full response for tool compatibility
+        if (options) {
+          return {
+            ok: false,
+            error: response.error || 'Unknown error'
+          };
+        }
         throw new Error(`Slack API error: ${response.error || 'Unknown error'}`);
       }
 
+      // If options are provided, return full response for tool compatibility
+      if (options) {
+        return {
+          ok: true,
+          members: response.members || [],
+          response_metadata: response.response_metadata
+        };
+      }
+
+      // For backwards compatibility, return just members array when no options
       return response.members || [];
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      // If options are provided, return error response for tool compatibility
+      if (options) {
+        return {
+          ok: false,
+          error: `Failed to get users: ${errorMessage}`
+        };
+      }
+      
       throw new Error(`Failed to get users: ${errorMessage}`);
     }
   }
@@ -234,16 +321,25 @@ export class SlackClient {
   async getConversationReplies(
     channelId: string, 
     threadTs: string, 
-    options?: { limit?: number; cursor?: string; inclusive?: boolean }
+    options?: { limit?: number; cursor?: string; inclusive?: boolean; oldest?: string }
   ): Promise<{ ok: boolean; messages?: SlackMessage[]; response_metadata?: { next_cursor?: string }; error?: string }> {
     try {
-      const response = await this.makeRequest<any>('conversations.replies', {
+      const params: any = {
         channel: channelId,
         ts: threadTs,
         limit: options?.limit || 100,
-        cursor: options?.cursor,
         inclusive: options?.inclusive !== false
-      });
+      };
+
+      if (options?.cursor) {
+        params.cursor = options.cursor;
+      }
+
+      if (options?.oldest) {
+        params.oldest = options.oldest;
+      }
+
+      const response = await this.makeRequest<any>('conversations.replies', params);
 
       return {
         ok: response.ok,
@@ -357,6 +453,84 @@ export class SlackClient {
   /**
    * Test API connection
    */
+  /**
+   * Search messages using search.inline API
+   */
+  async searchInline(params: {
+    channel: string;
+    query: string;
+    count?: number;
+    page?: number;
+    thread_replies?: boolean;
+    extract_len?: number;
+  }): Promise<{
+    ok: boolean;
+    error?: string;
+    items?: any[];
+    pagination?: any;
+  }> {
+    const response = await this.makeRequest<{
+      ok: boolean;
+      error?: string;
+      items?: any[];
+      pagination?: any;
+    }>('search.inline', {
+      channel: params.channel,
+      query: params.query,
+      count: params.count || 3,
+      page: params.page || 1,
+      thread_replies: params.thread_replies !== false ? 1 : 0,
+      extract_len: params.extract_len || 110
+    });
+
+    return response;
+  }
+
+  /**
+   * Search messages using search.modules.messages API
+   */
+  async searchMessages(params: {
+    module: string;
+    query: string;
+    count?: number;
+    page?: number;
+    sort?: string;
+    sort_dir?: string;
+    extracts?: number;
+    highlight?: number;
+    max_extract_len?: number;
+    search_exclude_bots?: number;
+  }): Promise<{
+    ok: boolean;
+    error?: string;
+    items?: any[];
+    pagination?: any;
+    filters?: any;
+    filter_suggestions?: any;
+  }> {
+    const response = await this.makeRequest<{
+      ok: boolean;
+      error?: string;
+      items?: any[];
+      pagination?: any;
+      filters?: any;
+      filter_suggestions?: any;
+    }>('search.modules.messages', {
+      module: params.module,
+      query: params.query,
+      count: params.count || 20,
+      page: params.page || 1,
+      sort: params.sort || 'score',
+      sort_dir: params.sort_dir || 'desc',
+      extracts: params.extracts || 1,
+      highlight: params.highlight !== undefined ? params.highlight : 1,
+      max_extract_len: params.max_extract_len || 200,
+      search_exclude_bots: params.search_exclude_bots || 0
+    });
+
+    return response;
+  }
+
   async testConnection(): Promise<boolean> {
     try {
       const response = await this.makeRequest<{ ok: boolean }>('auth.test');

@@ -24,13 +24,16 @@ export async function listChannels(args: ListChannelsArgs = {}) {
     // Create API client
     const client = new SlackClient(authResult.tokens!);
 
-    // Get channels
+    // Get channels - without options to get backwards compatible array response
     const channels = await client.getChannels();
+
+    // Ensure we have an array (backwards compatibility)
+    const channelsArray = Array.isArray(channels) ? channels : [];
 
     // Filter archived channels if requested
     const filteredChannels = args.include_archived
-      ? channels
-      : channels.filter((channel) => !channel.is_archived);
+      ? channelsArray
+      : channelsArray.filter((channel) => !channel.is_archived);
 
     // Format response
     const channelList = filteredChannels.map((channel) => ({
@@ -77,11 +80,14 @@ export async function listUsers(args: ListUsersArgs = {}) {
     // Create API client
     const client = new SlackClient(authResult.tokens!);
 
-    // Get users
+    // Get users - without options to get backwards compatible array response
     const users = await client.getUsers();
 
+    // Ensure we have an array (backwards compatibility)
+    const usersArray = Array.isArray(users) ? users : [];
+
     // Filter deleted users if requested
-    const filteredUsers = args.include_deleted ? users : users.filter((user) => !user.deleted);
+    const filteredUsers = args.include_deleted ? usersArray : usersArray.filter((user) => !user.deleted);
 
     // Format response
     const userList = filteredUsers.map((user) => ({

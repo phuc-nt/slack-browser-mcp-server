@@ -6,11 +6,10 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "test": "npx tsx src/run-all-tests.ts",
-    "test:all": "npx tsx src/run-all-tests.ts",
-    "test:connection": "npx tsx src/test-connection.ts",
-    "test:tools": "npx tsx src/test-tools.ts",
-    "test:resources": "npx tsx src/test-resources.ts"
+    "test": "npx tsx src/run-tests.ts",
+    "test:connection": "npx tsx src/run-tests.ts connection",
+    "test:tools": "npx tsx src/run-tests.ts tools",
+    "test:all": "npx tsx src/run-tests.ts all"
   },
   "keywords": [
     "mcp",
@@ -22,7 +21,7 @@
   "license": "ISC",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.1",
-    "dotenv": "^16.3.0"
+    "dotenv": "^16.6.1"
   },
   "devDependencies": {
     "@types/node": "^24.2.0",

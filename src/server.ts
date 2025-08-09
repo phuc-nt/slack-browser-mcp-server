@@ -11,13 +11,12 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { logger } from './utils/logger.js';
 import { ToolRegistry } from './tools/index.js';
-import { ResourceRegistry } from './resources/index.js';
+// ResourceRegistry removed - tool-only architecture
 import { createDevelopmentMiddleware } from './middleware/index.js';
 
 export class SlackMCPServer {
   private server: Server;
   private toolRegistry: ToolRegistry;
-  private resourceRegistry: ResourceRegistry;
 
   constructor() {
     this.server = new Server(
@@ -27,8 +26,8 @@ export class SlackMCPServer {
       },
       {
         capabilities: {
-          tools: {},
-          resources: {}
+          tools: {}
+          // resources removed - tool-only architecture
         },
       }
     );
@@ -41,7 +40,7 @@ export class SlackMCPServer {
       enableTracing: true
     });
     
-    this.resourceRegistry = new ResourceRegistry();
+    // ResourceRegistry removed - tool-only architecture
     this.setupHandlers();
   }
 
@@ -76,68 +75,8 @@ export class SlackMCPServer {
       }
     });
 
-    // Resource handlers
-    this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
-      logger.info('Received list resources request');
-      const resources = this.resourceRegistry.getResources();
-      logger.debug('Returning resources', { count: resources.length });
-      return { resources };
-    });
-
-    this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
-      const { uri } = request.params;
-      
-      
-      logger.info(`Received read resource request: ${uri}`);
-
-      try {
-        // FIRST: Check if this is a dynamic resource before doing getResource()
-        const baseUri = uri.split('?')[0];
-        const isDynamicResource = baseUri.startsWith('slack://channels/') && 
-                                 baseUri.endsWith('/history') && 
-                                 !baseUri.includes('{channelId}'); // Exclude template URI
-        
-        
-        
-        
-        
-        let mimeType = 'application/json'; // default
-        
-        if (isDynamicResource) {
-          
-          // Skip getResource() for dynamic resources, go straight to generation
-        } else {
-          // Try to get exact resource match for static resources
-          const resource = this.resourceRegistry.getResource(uri);
-          
-          
-          if (resource) {
-            mimeType = resource.mimeType;
-            
-          } else {
-            
-            throw new McpError(ErrorCode.InvalidRequest, `Resource not found: ${uri}`);
-          }
-        }
-
-        const content = await this.resourceRegistry.generateResourceContent(uri);
-        return {
-          contents: [{
-            uri,
-            mimeType,
-            text: content
-          }]
-        };
-      } catch (error) {
-        logger.error(`Resource read failed: ${uri}`, { error });
-        throw new McpError(
-          ErrorCode.InternalError,
-          `Resource read failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-        );
-      }
-    });
-
-    logger.info('MCP server handlers configured');
+    // No resource handlers - tool-only architecture
+    logger.info('MCP server handlers configured (tool-only architecture)');
   }
 
   async run(): Promise<void> {
@@ -157,7 +96,14 @@ export class SlackMCPServer {
     logger.info('Server initialization completed', {
       tools: stats.instances,
       middleware: stats.middlewareCount,
-      resources: this.resourceRegistry.getResources().length
+      architecture: 'tool-only'
+    });
+
+    // Keep the server running indefinitely
+    // The server will exit when the stdio connection is closed by the client
+    return new Promise<void>((resolve) => {
+      // This promise never resolves, keeping the process alive
+      // The process will exit when SIGINT/SIGTERM is received or connection closes
     });
   }
 

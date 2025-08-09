@@ -1,5 +1,5 @@
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
-import { EnhancedToolFactory } from './factory.js';
+import { ProductionToolFactory } from './production-factory.js';
 import {
   ToolMiddleware,
   ToolMetrics,
@@ -16,7 +16,7 @@ import { logger } from '../utils/logger.js';
 export { ToolExecutionResult, ToolHandler } from '../types/tools.js';
 
 export class ToolRegistry {
-  private factory: EnhancedToolFactory;
+  private factory: ProductionToolFactory;
   private middleware: ToolMiddleware[] = [];
   private metrics: Map<string, ToolMetrics> = new Map();
   private config: ToolRegistryConfig;
@@ -33,13 +33,14 @@ export class ToolRegistry {
       ...config,
     };
 
-    this.factory = new EnhancedToolFactory();
+    this.factory = new ProductionToolFactory();
     this.middleware = [...this.config.middleware];
 
-    logger.info('Enhanced ToolRegistry initialized', {
+    logger.info('Production ToolRegistry initialized', {
       enableMetrics: this.config.enableMetrics,
       enableTracing: this.config.enableTracing,
       maxConcurrentExecutions: this.config.maxConcurrentExecutions,
+      architecture: 'Phase 5 - Streamlined Production'
     });
   }
 
@@ -53,11 +54,10 @@ export class ToolRegistry {
     }
 
     try {
-      // Load built-in tools
-      await this.loadBuiltInTools();
-
-      // Load placeholder definitions for future Slack tools
-      await this.loadPlaceholderTools();
+      // Validate production configuration
+      if (!this.factory.validateConfiguration()) {
+        throw new Error('Production tool configuration validation failed');
+      }
 
       // Initialize metrics
       if (this.config.enableMetrics) {
@@ -66,9 +66,10 @@ export class ToolRegistry {
 
       this.isInitialized = true;
 
-      logger.info('ToolRegistry initialization completed', {
-        toolCount: this.factory.getAllToolInstances().length,
-        categories: this.factory.getStats().categoryCounts,
+      logger.info('Production ToolRegistry initialization completed', {
+        toolCount: this.factory.getTools().length,
+        categories: this.factory.getStats().categories,
+        architecture: 'Phase 5 - Streamlined Production'
       });
     } catch (error) {
       logger.error('ToolRegistry initialization failed', error);
@@ -77,48 +78,13 @@ export class ToolRegistry {
   }
 
   /**
-   * Load built-in tools (ping, echo)
-   */
-  private async loadBuiltInTools(): Promise<void> {
-    // Built-in tools are already registered in the factory constructor
-    const stats = this.factory.getStats();
-    logger.info('Built-in tools loaded', {
-      count: stats.instances,
-      tools: this.factory.getRegisteredTools(),
-    });
-  }
-
-  /**
-   * Load placeholder tool definitions
-   */
-  private async loadPlaceholderTools(): Promise<void> {
-    const placeholderTools = [
-      ...ConversationsPlaceholder.getPlaceholderTools(),
-      ...SearchPlaceholder.getPlaceholderTools(),
-    ];
-
-    logger.info('Loading placeholder tools for future Slack integration', {
-      count: placeholderTools.length,
-    });
-
-    // Note: These are just definitions, actual implementations will come in Phase 2
-    for (const tool of placeholderTools) {
-      logger.debug('Placeholder tool registered', {
-        name: tool.name,
-        category: tool.category,
-        requiresAuth: tool.requiresAuth,
-      });
-    }
-  }
-
-  /**
    * Initialize metrics collection
    */
   private initializeMetrics(): void {
-    const instances = this.factory.getAllToolInstances();
+    const tools = this.factory.getTools();
 
-    for (const instance of instances) {
-      const definition = instance.getDefinition();
+    for (const tool of tools) {
+      const definition = tool.getDefinition();
       this.metrics.set(definition.name, {
         toolName: definition.name,
         executionCount: 0,
@@ -130,7 +96,7 @@ export class ToolRegistry {
       });
     }
 
-    logger.debug('Metrics initialized for tools', {
+    logger.debug('Metrics initialized for production tools', {
       toolCount: this.metrics.size,
     });
   }
@@ -153,10 +119,10 @@ export class ToolRegistry {
    * Get all available tools for MCP
    */
   getTools(): Tool[] {
-    const instances = this.factory.getAllToolInstances();
+    const tools = this.factory.getTools();
 
-    return instances.map((instance) => {
-      const definition = instance.getDefinition();
+    return tools.map((tool) => {
+      const definition = tool.getDefinition();
       return {
         name: definition.name,
         description: definition.description,
@@ -208,8 +174,13 @@ export class ToolRegistry {
       // Execute middleware beforeTool hooks
       await this.executeMiddlewareBefore(context, args);
 
-      // Execute the tool
-      const result = await this.factory.executeTool(name, args, context);
+      // Get tool instance and execute
+      const tool = this.factory.getTool(name);
+      if (!tool) {
+        throw new Error(`Tool not found: ${name}`);
+      }
+
+      const result = await tool.execute(args, context);
 
       // Update metrics
       if (this.config.enableMetrics) {
@@ -226,7 +197,7 @@ export class ToolRegistry {
         toolName: name,
         traceId: context.traceId,
         success: result.success,
-        executionTime: result.metadata?.executionTime,
+        executionTime: Date.now() - context.startTime,
       });
 
       return mcpResult;
@@ -307,19 +278,8 @@ export class ToolRegistry {
     metrics.executionCount++;
     metrics.lastExecuted = new Date();
 
-    if (result.metadata?.executionTime) {
-      metrics.totalExecutionTime += result.metadata.executionTime;
-      metrics.averageExecutionTime = metrics.totalExecutionTime / metrics.executionCount;
-    }
-
     if (!result.success) {
       metrics.errorCount++;
-    }
-
-    if (result.metadata?.cacheHits && result.metadata?.apiCalls) {
-      const totalRequests = result.metadata.cacheHits + result.metadata.apiCalls;
-      metrics.cacheHitRate =
-        totalRequests > 0 ? (result.metadata.cacheHits / totalRequests) * 100 : 0;
     }
   }
 
@@ -412,22 +372,21 @@ export class ToolRegistry {
     logger.info('ToolRegistry cleanup started');
 
     // Cleanup all tool instances
-    const instances = this.factory.getAllToolInstances();
-    for (const instance of instances) {
-      if (instance.cleanup) {
+    const tools = this.factory.getTools();
+    for (const tool of tools) {
+      if (tool.cleanup) {
         try {
-          await instance.cleanup();
+          await tool.cleanup();
         } catch (error) {
           logger.warn('Tool cleanup failed', {
-            toolName: instance.getDefinition().name,
+            toolName: tool.getDefinition().name,
             error: error instanceof Error ? error.message : 'Unknown error',
           });
         }
       }
     }
 
-    // Clear caches
-    this.factory.clearCaches();
+    // Clear metrics
     this.metrics.clear();
 
     logger.info('ToolRegistry cleanup completed');
@@ -435,6 +394,6 @@ export class ToolRegistry {
 }
 
 // Re-export types and factory for external use
-export { EnhancedToolFactory } from './factory.js';
+export { ProductionToolFactory } from './production-factory.js';
 export { BaseSlackTool } from './base.js';
 export * from '../types/tools.js';

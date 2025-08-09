@@ -14,13 +14,9 @@ import { PostMessageTool, PostThreadReplyTool, UpdateMessageTool, DeleteMessageT
 
 // Import thread management tools
 import { 
-  GetThreadContextTool,
-  NavigateThreadRepliesTool,
   CreateThreadTool,
   ResolveThreadTool,
   ArchiveThreadTool,
-  SummarizeThreadTool,
-  GetThreadParticipantsTool,
   BulkThreadActionsTool
 } from './thread-tool-implementations.js';
 import { ThreadTools } from './threads.js';
@@ -35,6 +31,19 @@ import {
   ThreadMetricsTool
 } from './thread-workflow-implementations.js';
 import { ThreadWorkflowTools } from './thread-workflow.js';
+
+// Import data tools (Sprint 4.2)
+import { DataTools } from './data-tools.js';
+import { 
+  GetThreadRepliesTool,
+  SearchChannelMessagesTool,
+  SearchMessagesTool,
+  ListWorkspaceChannelsTool,
+  ListWorkspaceUsersTool
+} from './data-tool-implementations.js';
+
+// Import system tools (Sprint 4.1)
+import { SystemTools } from './system-tools.js';
 // Simple validation without Ajv for now
 
 /**
@@ -90,38 +99,27 @@ export class EnhancedToolFactory extends SlackToolFactory {
 
     // Register Sprint 3.2 Thread Management Tools
     try {
-      // Create tool instances with definitions
-      const getThreadContextTool = new GetThreadContextTool(ThreadTools.createGetThreadContextTool());
-      const navigateThreadRepliesTool = new NavigateThreadRepliesTool(ThreadTools.createNavigateThreadRepliesTool());
+      // Create tool instances with definitions - only working tools
       const createThreadTool = new CreateThreadTool(ThreadTools.createCreateThreadTool());
       const resolveThreadTool = new ResolveThreadTool(ThreadTools.createResolveThreadTool());
       const archiveThreadTool = new ArchiveThreadTool(ThreadTools.createArchiveThreadTool());
-      const summarizeThreadTool = new SummarizeThreadTool(ThreadTools.createSummarizeThreadTool());
-      const getThreadParticipantsTool = new GetThreadParticipantsTool(ThreadTools.createGetThreadParticipantsTool());
       const bulkThreadActionsTool = new BulkThreadActionsTool(ThreadTools.createBulkThreadActionsTool());
 
-      // Register all thread tools
-      this.toolInstances.set(getThreadContextTool.getDefinition().name, getThreadContextTool);
-      this.toolInstances.set(navigateThreadRepliesTool.getDefinition().name, navigateThreadRepliesTool);
+      // Register working thread tools only
       this.toolInstances.set(createThreadTool.getDefinition().name, createThreadTool);
       this.toolInstances.set(resolveThreadTool.getDefinition().name, resolveThreadTool);
       this.toolInstances.set(archiveThreadTool.getDefinition().name, archiveThreadTool);
-      this.toolInstances.set(summarizeThreadTool.getDefinition().name, summarizeThreadTool);
-      this.toolInstances.set(getThreadParticipantsTool.getDefinition().name, getThreadParticipantsTool);
       this.toolInstances.set(bulkThreadActionsTool.getDefinition().name, bulkThreadActionsTool);
 
-      logger.info('Registered Sprint 3.2 thread management tools', {
+      logger.info('Registered Sprint 3.2 thread management tools (broken tools removed)', {
         tools: [
-          'get_thread_context',
-          'navigate_thread_replies',
           'create_thread', 
           'resolve_thread',
           'archive_thread',
-          'summarize_thread',
-          'get_thread_participants',
           'bulk_thread_actions'
         ],
-        categories: ['navigation', 'actions', 'analysis', 'bulk']
+        categories: ['actions', 'bulk'],
+        removed_broken: ['get_thread_context', 'navigate_thread_replies', 'summarize_thread', 'get_thread_participants']
       });
     } catch (error) {
       logger.warn('Failed to register thread management tools', {
@@ -160,6 +158,74 @@ export class EnhancedToolFactory extends SlackToolFactory {
       });
     } catch (error) {
       logger.warn('Failed to register thread workflow tools', {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+
+    // Register Sprint 4.1 System Tools
+    try {
+      // System tools don't need implementation classes - they're tool definitions only
+      const systemToolDefinitions = [
+        SystemTools.createGetServerStatusTool(),
+        SystemTools.createGetServerInfoTool(),
+        SystemTools.createListAvailableToolsTool(),
+        SystemTools.createGetPerformanceMetricsTool(),
+        SystemTools.createGetWorkspaceInfoTool()
+      ];
+
+      // Create base tool instances for system tools (using base class)
+      systemToolDefinitions.forEach(definition => {
+        const toolInstance = super.createTool(definition);
+        if (toolInstance) {
+          this.toolInstances.set(definition.name, toolInstance);
+        }
+      });
+
+      logger.info('Registered Sprint 4.1 system tools', {
+        tools: [
+          'get_server_status',
+          'get_server_info', 
+          'list_available_tools',
+          'get_performance_metrics',
+          'get_workspace_info'
+        ],
+        categories: ['system']
+      });
+    } catch (error) {
+      logger.warn('Failed to register system tools', {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+
+    // Register Sprint 4.2 Data Tools
+    try {
+      // Create data tool instances with proper implementation classes
+      const getThreadRepliesTool = new GetThreadRepliesTool(DataTools.createGetThreadRepliesTool());
+      const searchChannelMessagesTool = new SearchChannelMessagesTool(DataTools.createSearchChannelMessagesTool());
+      const searchMessagesTool = new SearchMessagesTool(DataTools.createSearchMessagesTool());
+      const listWorkspaceChannelsTool = new ListWorkspaceChannelsTool(DataTools.createListWorkspaceChannelsTool());
+      const listWorkspaceUsersTool = new ListWorkspaceUsersTool(DataTools.createListWorkspaceUsersTool());
+
+      // Register all data tools
+      this.toolInstances.set(getThreadRepliesTool.getDefinition().name, getThreadRepliesTool);
+      this.toolInstances.set(searchChannelMessagesTool.getDefinition().name, searchChannelMessagesTool);
+      this.toolInstances.set(searchMessagesTool.getDefinition().name, searchMessagesTool);
+      this.toolInstances.set(listWorkspaceChannelsTool.getDefinition().name, listWorkspaceChannelsTool);
+      this.toolInstances.set(listWorkspaceUsersTool.getDefinition().name, listWorkspaceUsersTool);
+
+      logger.info('Registered Sprint 4.2 data tools', {
+        tools: [
+          'get_thread_replies',
+          'search_channel_messages',
+          'search_messages',
+          'list_workspace_channels',
+          'list_workspace_users'
+        ],
+        categories: ['data', 'search'],
+        note: 'API-based tools replacing removed resources and broken tools'
+      });
+    } catch (error) {
+      logger.warn('Failed to register data tools', {
         error: error instanceof Error ? error.message : 'Unknown error'
       });
     }

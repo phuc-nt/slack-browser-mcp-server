@@ -6,7 +6,7 @@ import { logger } from './utils/logger.js';
 
 async function main(): Promise<void> {
   console.log('[DEBUG INDEX] ===== SLACK MCP SERVER STARTING =====');
-  console.log('[DEBUG INDEX] This is the MODIFIED version with dynamic resource support');
+  console.log('[DEBUG INDEX] This is the TOOL-ONLY architecture version');
   logger.info('Initializing Slack MCP Server');
 
   const server = new SlackMCPServer();
@@ -32,9 +32,9 @@ async function main(): Promise<void> {
   }
 }
 
-if (require.main === module) {
-  main().catch((error) => {
-    logger.error('Unhandled error in main', { error });
-    process.exit(1);
-  });
-}
+// Always run main function since this is the entry point
+main().catch((error) => {
+  console.error('[DEBUG INDEX] Main function error:', error);
+  logger.error('Unhandled error in main', { error });
+  process.exit(1);
+});
