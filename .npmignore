@@ -1,0 +1,43 @@
+# Source files
+src/
+tsconfig.json
+eslint.config.js
+
+# Development files
+test-client/
+docs/
+benchmark.mjs
+tmux-ssh-guideline.md
+CLAUDE.md
+
+# IDE and development tool files
+.claude/
+.serena/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build artifacts (keep dist/ for npm)
+*.log
+*.tgz
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+
+# Git files
+.gitignore
+.git/
+
+# CI/CD files
+.github/
+
+# Prettier config (not needed for runtime)
+.prettierrc

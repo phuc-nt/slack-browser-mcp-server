@@ -1,8 +1,11 @@
 {
   "name": "slack-browser-mcp-server",
   "version": "1.0.0",
-  "description": "> **AI Assistants meets Slack** - Tích hợp Claude với Slack workspace mà không cần permissions",
+  "description": "AI meets Slack - Connect AI assistants (Cline, Cursor) to your Slack workspace without app permissions",
   "main": "dist/index.js",
+  "bin": {
+    "slack-browser-mcp-server": "dist/index.js"
+  },
   "directories": {
     "doc": "docs"
   },
@@ -15,15 +18,25 @@
     "format": "prettier --write src/**/*.ts",
     "test": "cd test-client && npm test",
     "debug": "ts-node --inspect src/index.ts",
-    "lint:fix": "eslint src/**/*.ts --fix"
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "prepublishOnly": "npm run clean && npm run build"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/phuc-nt/slack-browser-mcp-server.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "slack",
+    "mcp",
+    "claude",
+    "ai",
+    "server",
+    "model-context-protocol",
+    "browser-token",
+    "stealth-auth"
+  ],
+  "author": "phuc-nt",
+  "license": "MIT",
   "type": "module",
   "bugs": {
     "url": "https://github.com/phuc-nt/slack-browser-mcp-server/issues"

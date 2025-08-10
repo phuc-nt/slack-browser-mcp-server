@@ -1,17 +1,31 @@
 # Slack MCP Server Installation Guide
 
-> **Production-Ready Slack Integration** - Connect Claude to Slack without app permissions
+> **Production-Ready Slack Integration** - Connect AI assistants to Slack without app permissions
 
 ## System Requirements
 
 - macOS 10.15+ or Windows 10+
 - Node.js 18+ (for running the MCP server)
 - Slack workspace access
-- Claude Desktop (recommended MCP client)
+- Local MCP-compatible client (Cline, Cursor, or other MCP clients that support local stdio)
 
-## Installation
+## Installation Methods
 
-### Prerequisites Check
+### 🚀 Method 1: NPM Installation (Recommended)
+
+**Quick install from npm registry:**
+
+```bash
+npm install -g slack-browser-mcp-server
+```
+
+**That's it!** Skip to [Step 2: Get Slack Tokens](#step-2-get-slack-tokens) below.
+
+### 🔧 Method 2: Manual Installation from Source
+
+**For development or customization:**
+
+#### Prerequisites Check
 
 Verify Git and Node.js are installed:
 
@@ -21,26 +35,26 @@ node --version
 npm --version
 ```
 
-### Step 1: Clone Repository
+#### Step 1: Clone Repository
 
 ```bash
 git clone https://github.com/phuc-nt/slack-browser-mcp-server.git
 cd slack-browser-mcp-server
 ```
 
-### Step 2: Install Dependencies
+#### Step 2: Install Dependencies
 
 ```bash
 npm install
 ```
 
-### Step 3: Build the Project
+#### Step 3: Build the Project
 
 ```bash
 npm run build
 ```
 
-## Step 4: Get Slack Tokens
+## Step 2: Get Slack Tokens
 
 ### Option 1: Browser Extension (Recommended)
 
@@ -64,27 +78,97 @@ If you prefer manual extraction:
    - Go to **Application** tab → **Cookies** → your Slack domain
    - Find cookie named `d` and copy the value
 
-## Step 5: Configure Claude Desktop
+## Step 5: Configure Your AI Client
 
-Add to your Claude Desktop config file (`~/.config/claude-desktop/config.json`):
+### Find Your Global NPM Installation Path
+
+First, find where npm installed the package globally:
+
+```bash
+which slack-browser-mcp-server
+```
+
+**Copy this path** - you'll need it for the configuration below.
+
+**Common paths:**
+
+- **macOS (Homebrew):** `/opt/homebrew/bin/slack-browser-mcp-server`
+- **macOS (Node.js):** `/usr/local/bin/slack-browser-mcp-server`
+- **Linux:** `/usr/local/bin/slack-browser-mcp-server`
+- **Windows:** `C:\Users\{username}\AppData\Roaming\npm\slack-browser-mcp-server.cmd`
+
+### MCP Client Configuration
+
+**For Cline, Cursor, and other local MCP clients:**
 
 ```json
 {
   "mcpServers": {
-    "slack-browser": {
+    "phuc-nt/slack-browser-mcp": {
+      "disabled": false,
+      "timeout": 60,
+      "type": "stdio",
       "command": "node",
-      "args": ["/full/path/to/slack-browser-mcp-server/dist/index.js"],
+      "args": ["/opt/homebrew/bin/slack-browser-mcp-server"],
       "env": {
         "SLACK_XOXC_TOKEN": "xoxc-your-extracted-token-here",
         "SLACK_XOXD_TOKEN": "your-d-cookie-value-here",
-        "LOG_LEVEL": "info"
+        "SLACK_TEAM_DOMAIN": "your-workspace-name"
       }
     }
   }
 }
 ```
 
-### Find Your Full Path
+**⚠️ Important:** Replace `/opt/homebrew/bin/slack-browser-mcp-server` with **your actual path** from the `which` command above.
+
+### Alternative: Manual Installation from Source
+
+If you built from source instead of using npm:
+
+```json
+{
+  "mcpServers": {
+    "phuc-nt/slack-browser-mcp": {
+      "disabled": false,
+      "timeout": 60,
+      "type": "stdio",
+      "command": "node",
+      "args": ["/full/path/to/slack-browser-mcp-server/dist/index.js"],
+      "env": {
+        "SLACK_XOXC_TOKEN": "xoxc-your-extracted-token-here",
+        "SLACK_XOXD_TOKEN": "your-d-cookie-value-here",
+        "SLACK_TEAM_DOMAIN": "your-workspace-name"
+      }
+    }
+  }
+}
+```
+
+### Configuration Parameters Explained
+
+**Required Environment Variables:**
+
+- `SLACK_XOXC_TOKEN`: Your workspace browser token (starts with `xoxc-`)
+- `SLACK_XOXD_TOKEN`: Your browser session cookie value (from `d` cookie)
+- `SLACK_TEAM_DOMAIN`: Your workspace domain (e.g., if your Slack URL is `https://mycompany.slack.com`, use `mycompany`)
+
+**MCP Server Settings:**
+
+- `disabled`: Set to `false` to enable the server
+- `timeout`: Maximum time (seconds) to wait for responses
+- `type`: Always use `"stdio"` for MCP client integration
+
+### Supported MCP Clients
+
+This server works with local MCP clients that support stdio transport:
+
+- **✅ Cline** - Use the absolute path configuration above
+- **✅ Cursor** - Use the absolute path configuration above
+- **✅ Other local MCP clients** - Use the same stdio configuration format
+- **❌ Claude Desktop** - Only supports remote MCP servers, not local
+
+### Find Your Full Path (for Option B)
 
 **macOS/Linux:**
 
@@ -129,9 +213,9 @@ npx tsx src/test-connection.ts
 npx tsx src/test-all-tools.ts
 ```
 
-### Test with Claude Desktop
+### Test with Your AI Client
 
-After restarting Claude Desktop, test with questions like:
+After restarting your AI client (Claude Desktop, Cline, Cursor, etc.), test with questions like:
 
 - "List all channels in my Slack workspace"
 - "Search for messages about 'meeting' in the last day"
@@ -179,17 +263,18 @@ After installation, you'll have access to **11 production tools**:
 
 ## 🎉 Installation Complete!
 
-Your Slack MCP Server is now ready with **11 production tools** and **100% test success rate**. 
+Your Slack MCP Server is now ready with **11 production tools** and **100% test success rate**.
 
 **What you can do now:**
-- Ask Claude to search your Slack messages with advanced operators
+
+- Ask your AI assistant to search your Slack messages with advanced operators
 - Collect thread discussions from specific time periods
-- Post messages and manage conversations directly from Claude
+- Post messages and manage conversations directly from your AI client
 - Get comprehensive workspace data and analytics
 
 **Need help?** Check the troubleshooting section or visit our [GitHub repository](https://github.com/phuc-nt/slack-browser-mcp-server) for support.
 
-**Ready to explore?** Start with simple commands like *"List all channels in my workspace"* or *"Search for messages about 'project' from last week"*.
+**Ready to explore?** Start with simple commands like _"List all channels in my workspace"_ or _"Search for messages about 'project' from last week"_.
 
 ---
 
