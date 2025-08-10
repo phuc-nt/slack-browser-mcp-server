@@ -1,6 +1,6 @@
 {
   "name": "slack-browser-mcp-server",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "AI meets Slack - Connect AI assistants (Cline, Cursor) to your Slack workspace without app permissions",
   "main": "dist/index.js",
   "bin": {
