@@ -9,21 +9,21 @@ import {
   ListWorkspaceUsersTool,
 } from './data-tool-implementations.js';
 import { SearchMessagesTool, SearchFilesTool } from './enhanced-search-tools.js';
-import { CollectThreadsByTimeRangeTool } from './time-range-thread-collection.js';
+import { CollectThreadsByTimeRangeTool, CollectThreadsByKeywordTool } from './time-range-thread-collection.js';
 import { ReactToMessageTool } from './reactions.js';
 import { GetUserProfileTool } from './user-profile.js';
 import { DataTools } from './data-tools.js';
 
 /**
- * Production Tool Factory - Sprint 7.2 Response Optimization
+ * Production Tool Factory - Sprint 7.3 Enhancement
  *
- * Registers exactly 11 core production tools (removed server_info):
+ * Registers 12 core production tools (added keyword search):
  * - 4 Messaging tools
- * - 4 Data retrieval tools
+ * - 3 Data retrieval tools
  * - 2 Enhanced search tools
- * - 1 Time-range thread collection tool
+ * - 2 Thread collection tools (time-range + keyword-based)
  *
- * Sprint 7.2: Removed server_info tool and optimized response payloads by 60-70%.
+ * Sprint 7.3: Added keyword-based thread collection for enhanced discovery.
  */
 export class ProductionToolFactory {
   private toolInstances: Map<string, BaseSlackTool> = new Map();
@@ -33,7 +33,7 @@ export class ProductionToolFactory {
   }
 
   /**
-   * Register the 11 core production tools (Sprint 7.2)
+   * Register the 12 core production tools (Sprint 7.3)
    */
   private registerProductionTools(): void {
     try {
@@ -70,18 +70,19 @@ export class ProductionToolFactory {
         tools: ['search_messages', 'search_files'],
       });
 
-      // Time-Range Thread Collection Tool (1) - Phase 6.2
+      // Thread Collection Tools (2) - Sprint 7.3 Enhanced
       this.registerTool(new CollectThreadsByTimeRangeTool());
+      this.registerTool(new CollectThreadsByKeywordTool());
 
-      logger.info('Registered time-range thread collection tool', {
-        tools: ['collect_threads_by_timerange'],
+      logger.info('Registered thread collection tools', {
+        tools: ['collect_threads_by_timerange', 'collect_threads_by_keyword'],
       });
 
       // System Tools removed in Sprint 7.2 for streamlined architecture
 
       logger.info('Production tool factory initialized', {
         totalTools: this.toolInstances.size,
-        architecture: 'Sprint 7.2 - Response Optimization',
+        architecture: 'Sprint 7.3 - Keyword Search Enhancement',
         tools: Array.from(this.toolInstances.keys()).sort(),
       });
     } catch (error) {
@@ -124,15 +125,14 @@ export class ProductionToolFactory {
         messaging: 4,
         data: 3,
         search: 2,
-        collection: 1,
-        system: 1,
+        collection: 2,
       },
       toolNames: Array.from(this.toolInstances.keys()).sort(),
     };
   }
 
   /**
-   * Validate that exactly 11 tools are registered (Sprint 7.2 - removed server_info)
+   * Validate that exactly 12 tools are registered (Sprint 7.3 - added keyword search)
    */
   validateConfiguration(): boolean {
     const expectedTools = [
@@ -149,8 +149,9 @@ export class ProductionToolFactory {
       // Enhanced Search (2) - Phase 6
       'search_messages',
       'search_files',
-      // Time-Range Thread Collection (1) - Phase 6.2
+      // Thread Collection (2) - Sprint 7.3 Enhanced
       'collect_threads_by_timerange',
+      'collect_threads_by_keyword',
     ];
 
     const actualTools = Array.from(this.toolInstances.keys()).sort();

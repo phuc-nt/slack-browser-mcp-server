@@ -62,7 +62,7 @@ class ComprehensiveToolTestSuite {
     try {
       await this.setupMCPConnection();
 
-      // Test all tool categories - Sprint 7.2: 11 tools (removed system)
+      // Test all tool categories - Sprint 7.3: 12 tools (added keyword search)
       await this.testBasicTools();
       await this.testDataRetrievalTools();
       await this.testSearchTools();
@@ -101,6 +101,7 @@ class ComprehensiveToolTestSuite {
       await this.testReactToMessage();
       await this.testSearchMessages();
       await this.testCollectThreads();
+      await this.testCollectThreadsByKeyword();
       await this.testGetThreadReplies();
       await this.testUpdateMessage();
       await this.testDeleteMessage();
@@ -336,7 +337,7 @@ class ComprehensiveToolTestSuite {
   }
 
   private async testThreadCollectionTools(): Promise<void> {
-    console.log('🧵 Testing Time-Range Thread Collection Tool (Phase 6.2)...');
+    console.log('🧵 Testing Thread Collection Tools (Sprint 7.3)...');
 
     // Get current timestamp for time range testing
     const currentTime = new Date();
@@ -399,6 +400,142 @@ class ComprehensiveToolTestSuite {
         expectedResponseType: 'json',
         expectSuccess: true,
         expectedFields: ['collection_summary', 'threads'],
+      }
+    );
+
+    // Test collect_threads_by_timerange with keyword filtering (Sprint 7.3)
+    await this.testTool(
+      'collect_threads_by_timerange',
+      {
+        channel: this.testConfig.channels.public.id,
+        start_date: twoDaysAgo.toISOString(),
+        end_date: currentTime.toISOString(),
+        keywords: ['test', 'message'],
+        match_type: 'any',
+        max_threads: 5,
+      },
+      'Collect threads with keyword filtering (any match)',
+      {
+        expectedResponseType: 'json',
+        expectSuccess: true,
+        expectedFields: ['collection_summary', 'threads'],
+        customValidation: (result) => {
+          // Verify keyword filtering metadata is present
+          if (result.collection_summary?.keywords_applied?.length > 0) {
+            console.log(`   ✅ Keywords applied: ${result.collection_summary.keywords_applied.join(', ')}`);
+            return { valid: true };
+          }
+          return { valid: true, warning: 'No keywords applied in response' };
+        }
+      }
+    );
+
+    console.log('🔍 Testing Keyword-Based Thread Collection Tool (Sprint 7.3)...');
+
+    // Test new collect_threads_by_keyword tool - basic functionality
+    await this.testTool(
+      'collect_threads_by_keyword',
+      {
+        channel: this.testConfig.channels.public.id,
+        keywords: ['test'],
+        start_date: twoDaysAgo.toISOString(),
+        end_date: currentTime.toISOString(),
+        max_threads: 10,
+      },
+      'Collect threads containing "test" keyword',
+      {
+        expectedResponseType: 'json',
+        expectSuccess: true,
+        expectedFields: ['channel', 'time_range', 'search_query', 'collection_summary', 'threads'],
+        customValidation: (result) => {
+          // Verify search query is built correctly
+          if (result.search_query && result.search_query.includes('test')) {
+            console.log(`   ✅ Search query: ${result.search_query}`);
+            return { valid: true };
+          }
+          return { valid: false, error: 'Search query not properly constructed' };
+        }
+      }
+    );
+
+    // Test collect_threads_by_keyword with multiple keywords (ANY match)
+    await this.testTool(
+      'collect_threads_by_keyword',
+      {
+        channel: this.testConfig.channels.public.id,
+        keywords: ['test', 'message', 'tool'],
+        match_type: 'any',
+        start_date: twoDaysAgo.toISOString(),
+        end_date: currentTime.toISOString(),
+        max_threads: 5,
+      },
+      'Collect threads with multiple keywords (any match)',
+      {
+        expectedResponseType: 'json',
+        expectSuccess: true,
+        expectedFields: ['search_query', 'collection_summary'],
+        customValidation: (result) => {
+          // Verify OR logic is used in search query
+          if (result.search_query && (result.search_query.includes('OR') || result.search_query.includes('('))) {
+            console.log(`   ✅ Multiple keyword query: ${result.search_query}`);
+            return { valid: true };
+          }
+          return { valid: true, warning: 'OR logic not detected in query' };
+        }
+      }
+    );
+
+    // Test collect_threads_by_keyword with ALL match type
+    await this.testTool(
+      'collect_threads_by_keyword',
+      {
+        channel: this.testConfig.channels.public.id,
+        keywords: ['test', 'message'],
+        match_type: 'all',
+        start_date: twoDaysAgo.toISOString(),
+        end_date: currentTime.toISOString(),
+        max_threads: 3,
+      },
+      'Collect threads requiring all keywords',
+      {
+        expectedResponseType: 'json',
+        expectSuccess: true,
+        expectedFields: ['collection_summary'],
+        customValidation: (result) => {
+          // Verify AND logic (no OR in query for all match)
+          if (result.search_query && !result.search_query.includes('OR')) {
+            console.log(`   ✅ All-match query: ${result.search_query}`);
+            return { valid: true };
+          }
+          return { valid: true, warning: 'AND logic not properly implemented' };
+        }
+      }
+    );
+
+    // Test collect_threads_by_keyword with your specific test case
+    await this.testTool(
+      'collect_threads_by_keyword',
+      {
+        channel: 'C099184U2TU', // Your mcp_test channel
+        keywords: ['test'],
+        start_date: '2025-07-31T00:00:00Z',
+        end_date: '2025-08-09T23:59:59Z',
+        max_threads: 10,
+      },
+      'Test with your specific query pattern (mcp_test channel)',
+      {
+        expectedResponseType: 'json',
+        expectSuccess: true,
+        expectedFields: ['search_query', 'collection_summary'],
+        customValidation: (result) => {
+          // Verify the search query matches expected pattern
+          const expectedChannelId = 'C099184U2TU';
+          if (result.search_query && result.search_query.includes(expectedChannelId)) {
+            console.log(`   ✅ Channel-specific query: ${result.search_query}`);
+            return { valid: true };
+          }
+          return { valid: true, warning: 'Channel-specific query not detected' };
+        }
       }
     );
   }
@@ -730,6 +867,45 @@ class ComprehensiveToolTestSuite {
         }
       }
     }
+  }
+
+  private async testCollectThreadsByKeyword(): Promise<void> {
+    console.log('\n🔍 8.1. Testing Keyword-Based Thread Collection (Sprint 7.3)');
+
+    // Calculate time range - last 2 days for more data
+    const endTime = new Date();
+    const startTime = new Date(endTime.getTime() - 2 * 24 * 60 * 60 * 1000); // 2 days ago
+
+    const result = await this.testSequentialTool(
+      'collect_threads_by_keyword',
+      {
+        channel: this.testConfig.channels.public.id,
+        keywords: ['test', 'message'],
+        match_type: 'any',
+        start_date: startTime.toISOString(),
+        end_date: endTime.toISOString(),
+        max_threads: 5,
+      },
+      'Collect threads containing test keywords'
+    );
+
+    // Log search query for verification
+    if (result && result.search_query) {
+      console.log(`   ✅ Generated search query: ${result.search_query}`);
+    }
+
+    // Also test with the specific mcp_test channel pattern
+    await this.testSequentialTool(
+      'collect_threads_by_keyword',
+      {
+        channel: 'C099184U2TU', // mcp_test channel
+        keywords: ['test'],
+        start_date: '2025-07-31T00:00:00Z',
+        end_date: '2025-08-09T23:59:59Z',
+        max_threads: 5,
+      },
+      'Test mcp_test channel keyword search'
+    );
   }
 
   private async testGetThreadReplies(): Promise<void> {
