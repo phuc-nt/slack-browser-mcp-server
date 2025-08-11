@@ -2,7 +2,7 @@
 
 > **AI meets Slack** - Connect AI assistants to your Slack workspace without app permissions
 
-[![Tools](https://img.shields.io/badge/Tools-11%20Production-blue)](#features)
+[![Tools](https://img.shields.io/badge/Tools-12%20Production-blue)](#features)
 [![License](https://img.shields.io/badge/License-MIT-green)](#license)
 
 ## 🚀 What is this?
@@ -11,10 +11,10 @@
 
 ## ✨ Features
 
-### 🔧 **11 Production Tools:**
+### 🔧 **12 Production Tools:**
 
 - **Messaging** (4): post_message, update_message, delete_message, react_to_message
-- **Data Retrieval** (3): get_thread_replies, list_workspace_channels, list_workspace_users
+- **Data Retrieval** (4): get_thread_replies, list_workspace_channels, list_workspace_users, get_user_profile
 - **Advanced Search** (2): search_messages, search_files
 - **Thread Collection** (1): collect_threads_by_timerange
 - **System** (1): server_info

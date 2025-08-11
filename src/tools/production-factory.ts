@@ -3,24 +3,29 @@ import { logger } from '../utils/logger.js';
 
 // Import core production tools only
 import { PostMessageTool, UpdateMessageTool, DeleteMessageTool } from './messaging.js';
-import { GetThreadRepliesTool, ListWorkspaceChannelsTool, ListWorkspaceUsersTool } from './data-tool-implementations.js';
+import {
+  GetThreadRepliesTool,
+  ListWorkspaceChannelsTool,
+  ListWorkspaceUsersTool,
+} from './data-tool-implementations.js';
 import { SearchMessagesTool, SearchFilesTool } from './enhanced-search-tools.js';
 import { CollectThreadsByTimeRangeTool } from './time-range-thread-collection.js';
 import { ReactToMessageTool } from './reactions.js';
 import { ServerInfoTool } from './server-info.js';
+import { GetUserProfileTool } from './user-profile.js';
 import { DataTools } from './data-tools.js';
 
 /**
- * Production Tool Factory - Phase 6.2 Time-Range Thread Collection
- * 
- * Registers exactly 11 core production tools:
+ * Production Tool Factory - Phase 6.3 User Profile Tool
+ *
+ * Registers exactly 12 core production tools:
  * - 4 Messaging tools
- * - 3 Data retrieval tools  
+ * - 4 Data retrieval tools (added get_user_profile)
  * - 2 Enhanced search tools
- * - 1 Time-range thread collection tool (Sprint 6.2)
+ * - 1 Time-range thread collection tool
  * - 1 System tool
- * 
- * Phase 6.2 enhancement: Time-range thread collection with 3-step process.
+ *
+ * Phase 6.3 enhancement: User profile retrieval with display name and account extraction.
  */
 export class ProductionToolFactory {
   private toolInstances: Map<string, BaseSlackTool> = new Map();
@@ -30,7 +35,7 @@ export class ProductionToolFactory {
   }
 
   /**
-   * Register the 11 core production tools (Phase 6.2)
+   * Register the 12 core production tools (Phase 6.3)
    */
   private registerProductionTools(): void {
     try {
@@ -41,16 +46,22 @@ export class ProductionToolFactory {
       this.registerTool(new ReactToMessageTool());
 
       logger.info('Registered messaging tools', {
-        tools: ['post_message', 'update_message', 'delete_message', 'react_to_message']
+        tools: ['post_message', 'update_message', 'delete_message', 'react_to_message'],
       });
 
-      // Data Retrieval Tools (3)
+      // Data Retrieval Tools (4) - Phase 6.3
       this.registerTool(new GetThreadRepliesTool(DataTools.createGetThreadRepliesTool()));
       this.registerTool(new ListWorkspaceChannelsTool(DataTools.createListWorkspaceChannelsTool()));
       this.registerTool(new ListWorkspaceUsersTool(DataTools.createListWorkspaceUsersTool()));
+      this.registerTool(new GetUserProfileTool()); // Phase 6.3 - User profile tool
 
       logger.info('Registered data retrieval tools', {
-        tools: ['get_thread_replies', 'list_workspace_channels', 'list_workspace_users']
+        tools: [
+          'get_thread_replies',
+          'list_workspace_channels',
+          'list_workspace_users',
+          'get_user_profile',
+        ],
       });
 
       // Enhanced Search Tools (2) - Phase 6
@@ -58,32 +69,31 @@ export class ProductionToolFactory {
       this.registerTool(new SearchFilesTool());
 
       logger.info('Registered enhanced search tools', {
-        tools: ['search_messages', 'search_files']
+        tools: ['search_messages', 'search_files'],
       });
 
       // Time-Range Thread Collection Tool (1) - Phase 6.2
       this.registerTool(new CollectThreadsByTimeRangeTool());
 
       logger.info('Registered time-range thread collection tool', {
-        tools: ['collect_threads_by_timerange']
+        tools: ['collect_threads_by_timerange'],
       });
 
       // System Tools (1)
       this.registerTool(new ServerInfoTool());
 
       logger.info('Registered system tools', {
-        tools: ['server_info']
+        tools: ['server_info'],
       });
 
       logger.info('Production tool factory initialized', {
         totalTools: this.toolInstances.size,
-        architecture: 'Phase 6.2 - Time-Range Thread Collection',
-        tools: Array.from(this.toolInstances.keys()).sort()
+        architecture: 'Phase 6.3 - User Profile Tool',
+        tools: Array.from(this.toolInstances.keys()).sort(),
       });
-
     } catch (error) {
       logger.error('Failed to register production tools', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
       throw error;
     }
@@ -122,27 +132,34 @@ export class ProductionToolFactory {
         data: 3,
         search: 2,
         collection: 1,
-        system: 1
+        system: 1,
       },
-      toolNames: Array.from(this.toolInstances.keys()).sort()
+      toolNames: Array.from(this.toolInstances.keys()).sort(),
     };
   }
 
   /**
-   * Validate that exactly 11 tools are registered (Phase 6.2)
+   * Validate that exactly 12 tools are registered (Phase 6.3)
    */
   validateConfiguration(): boolean {
     const expectedTools = [
       // Messaging (4)
-      'post_message', 'update_message', 'delete_message', 'react_to_message',
-      // Data (3) 
-      'get_thread_replies', 'list_workspace_channels', 'list_workspace_users',
+      'post_message',
+      'update_message',
+      'delete_message',
+      'react_to_message',
+      // Data (4) - Phase 6.3
+      'get_thread_replies',
+      'list_workspace_channels',
+      'list_workspace_users',
+      'get_user_profile',
       // Enhanced Search (2) - Phase 6
-      'search_messages', 'search_files',
+      'search_messages',
+      'search_files',
       // Time-Range Thread Collection (1) - Phase 6.2
       'collect_threads_by_timerange',
       // System (1)
-      'server_info'
+      'server_info',
     ];
 
     const actualTools = Array.from(this.toolInstances.keys()).sort();
@@ -152,23 +169,23 @@ export class ProductionToolFactory {
       logger.error('Tool count mismatch', {
         expected: expectedSorted.length,
         actual: actualTools.length,
-        missing: expectedSorted.filter(t => !actualTools.includes(t)),
-        extra: actualTools.filter(t => !expectedSorted.includes(t))
+        missing: expectedSorted.filter((t) => !actualTools.includes(t)),
+        extra: actualTools.filter((t) => !expectedSorted.includes(t)),
       });
       return false;
     }
 
     const isValid = JSON.stringify(actualTools) === JSON.stringify(expectedSorted);
-    
+
     if (!isValid) {
       logger.error('Tool configuration mismatch', {
         expected: expectedSorted,
-        actual: actualTools
+        actual: actualTools,
       });
     } else {
       logger.info('Production tool configuration validated', {
         toolCount: actualTools.length,
-        tools: actualTools
+        tools: actualTools,
       });
     }
 

@@ -64,16 +64,20 @@ export class SlackClient {
     types?: string;
     limit?: number;
     cursor?: string;
-  }): Promise<SlackChannel[] | {
-    ok: boolean;
-    error?: string;
-    channels?: SlackChannel[];
-    response_metadata?: any;
-  }> {
+  }): Promise<
+    | SlackChannel[]
+    | {
+        ok: boolean;
+        error?: string;
+        channels?: SlackChannel[];
+        response_metadata?: any;
+      }
+  > {
     try {
       const params: any = {
         types: options?.types || 'public_channel,private_channel,mpim,im',
-        exclude_archived: options?.exclude_archived !== undefined ? options.exclude_archived : false,
+        exclude_archived:
+          options?.exclude_archived !== undefined ? options.exclude_archived : false,
         limit: options?.limit || 1000,
       };
 
@@ -91,7 +95,7 @@ export class SlackClient {
         if (options) {
           return {
             ok: false,
-            error: response.error || 'Unknown error'
+            error: response.error || 'Unknown error',
           };
         }
         throw new Error(`Slack API error: ${response.error || 'Unknown error'}`);
@@ -102,7 +106,7 @@ export class SlackClient {
         return {
           ok: true,
           channels: response.channels || [],
-          response_metadata: response.response_metadata
+          response_metadata: response.response_metadata,
         };
       }
 
@@ -110,15 +114,15 @@ export class SlackClient {
       return response.channels || [];
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
+
       // If options are provided, return error response for tool compatibility
       if (options) {
         return {
           ok: false,
-          error: `Failed to get channels: ${errorMessage}`
+          error: `Failed to get channels: ${errorMessage}`,
         };
       }
-      
+
       throw new Error(`Failed to get channels: ${errorMessage}`);
     }
   }
@@ -126,16 +130,15 @@ export class SlackClient {
   /**
    * Get list of users in workspace
    */
-  async getUsers(options?: {
-    include_locale?: boolean;
-    limit?: number;
-    cursor?: string;
-  }): Promise<SlackUser[] | {
-    ok: boolean;
-    error?: string;
-    members?: SlackUser[];
-    response_metadata?: any;
-  }> {
+  async getUsers(options?: { include_locale?: boolean; limit?: number; cursor?: string }): Promise<
+    | SlackUser[]
+    | {
+        ok: boolean;
+        error?: string;
+        members?: SlackUser[];
+        response_metadata?: any;
+      }
+  > {
     try {
       const params: any = {
         limit: options?.limit || 1000,
@@ -156,7 +159,7 @@ export class SlackClient {
         if (options) {
           return {
             ok: false,
-            error: response.error || 'Unknown error'
+            error: response.error || 'Unknown error',
           };
         }
         throw new Error(`Slack API error: ${response.error || 'Unknown error'}`);
@@ -167,7 +170,7 @@ export class SlackClient {
         return {
           ok: true,
           members: response.members || [],
-          response_metadata: response.response_metadata
+          response_metadata: response.response_metadata,
         };
       }
 
@@ -175,15 +178,15 @@ export class SlackClient {
       return response.members || [];
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
+
       // If options are provided, return error response for tool compatibility
       if (options) {
         return {
           ok: false,
-          error: `Failed to get users: ${errorMessage}`
+          error: `Failed to get users: ${errorMessage}`,
         };
       }
-      
+
       throw new Error(`Failed to get users: ${errorMessage}`);
     }
   }
@@ -217,7 +220,7 @@ export class SlackClient {
    * Used for time-range thread collection (Sprint 6.2)
    */
   async getConversationHistoryWithTimeRange(
-    channelId: string, 
+    channelId: string,
     options: {
       oldest?: string;
       latest?: string;
@@ -235,7 +238,7 @@ export class SlackClient {
       const params: any = {
         channel: channelId,
         limit: options.limit || 999,
-        inclusive: options.inclusive !== false
+        inclusive: options.inclusive !== false,
       };
 
       if (options.oldest) {
@@ -259,13 +262,13 @@ export class SlackClient {
         ok: response.ok,
         messages: response.messages,
         response_metadata: response.response_metadata,
-        error: response.error
+        error: response.error,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return {
         ok: false,
-        error: `Failed to get conversation history with time range: ${errorMessage}`
+        error: `Failed to get conversation history with time range: ${errorMessage}`,
       };
     }
   }
@@ -306,7 +309,7 @@ export class SlackClient {
       const response = await this.makeRequest<SlackPostMessageResponse>('chat.postMessage', data);
 
       if (!response.ok) {
-        throw new Error(`Slack API error: ${response.error || 'Unknown error'}`);;
+        throw new Error(`Slack API error: ${response.error || 'Unknown error'}`);
       }
 
       return response;
@@ -352,7 +355,10 @@ export class SlackClient {
   /**
    * Delete a message
    */
-  async deleteMessage(channel: string, ts: string): Promise<{ ok: boolean; channel: string; ts: string }> {
+  async deleteMessage(
+    channel: string,
+    ts: string
+  ): Promise<{ ok: boolean; channel: string; ts: string }> {
     try {
       const response = await this.makeRequest<{ ok: boolean; channel: string; ts: string }>(
         'chat.delete',
@@ -377,16 +383,21 @@ export class SlackClient {
    * Get conversation replies (thread replies)
    */
   async getConversationReplies(
-    channelId: string, 
-    threadTs: string, 
+    channelId: string,
+    threadTs: string,
     options?: { limit?: number; cursor?: string; inclusive?: boolean; oldest?: string }
-  ): Promise<{ ok: boolean; messages?: SlackMessage[]; response_metadata?: { next_cursor?: string }; error?: string }> {
+  ): Promise<{
+    ok: boolean;
+    messages?: SlackMessage[];
+    response_metadata?: { next_cursor?: string };
+    error?: string;
+  }> {
     try {
       const params: any = {
         channel: channelId,
         ts: threadTs,
         limit: options?.limit || 100,
-        inclusive: options?.inclusive !== false
+        inclusive: options?.inclusive !== false,
       };
 
       if (options?.cursor) {
@@ -403,13 +414,13 @@ export class SlackClient {
         ok: response.ok,
         messages: response.messages,
         response_metadata: response.response_metadata,
-        error: response.error
+        error: response.error,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return {
         ok: false,
-        error: `Failed to get conversation replies: ${errorMessage}`
+        error: `Failed to get conversation replies: ${errorMessage}`,
       };
     }
   }
@@ -417,22 +428,24 @@ export class SlackClient {
   /**
    * Get conversation info
    */
-  async getConversationInfo(channelId: string): Promise<{ ok: boolean; channel?: SlackChannel; error?: string }> {
+  async getConversationInfo(
+    channelId: string
+  ): Promise<{ ok: boolean; channel?: SlackChannel; error?: string }> {
     try {
       const response = await this.makeRequest<any>('conversations.info', {
-        channel: channelId
+        channel: channelId,
       });
 
       return {
         ok: response.ok,
         channel: response.channel,
-        error: response.error
+        error: response.error,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return {
         ok: false,
-        error: `Failed to get conversation info: ${errorMessage}`
+        error: `Failed to get conversation info: ${errorMessage}`,
       };
     }
   }
@@ -440,23 +453,27 @@ export class SlackClient {
   /**
    * Add reaction to message
    */
-  async addReaction(channelId: string, messageTs: string, reaction: string): Promise<{ ok: boolean; error?: string }> {
+  async addReaction(
+    channelId: string,
+    messageTs: string,
+    reaction: string
+  ): Promise<{ ok: boolean; error?: string }> {
     try {
       const response = await this.makeRequest<any>('reactions.add', {
         channel: channelId,
         timestamp: messageTs,
-        name: reaction
+        name: reaction,
       });
 
       return {
         ok: response.ok,
-        error: response.error
+        error: response.error,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return {
         ok: false,
-        error: `Failed to add reaction: ${errorMessage}`
+        error: `Failed to add reaction: ${errorMessage}`,
       };
     }
   }
@@ -468,18 +485,18 @@ export class SlackClient {
     try {
       const response = await this.makeRequest<any>('pins.add', {
         channel: channelId,
-        timestamp: messageTs
+        timestamp: messageTs,
       });
 
       return {
         ok: response.ok,
-        error: response.error
+        error: response.error,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return {
         ok: false,
-        error: `Failed to pin message: ${errorMessage}`
+        error: `Failed to pin message: ${errorMessage}`,
       };
     }
   }
@@ -487,23 +504,26 @@ export class SlackClient {
   /**
    * Get permalink for message
    */
-  async getPermalink(channelId: string, messageTs: string): Promise<{ ok: boolean; permalink?: string; error?: string }> {
+  async getPermalink(
+    channelId: string,
+    messageTs: string
+  ): Promise<{ ok: boolean; permalink?: string; error?: string }> {
     try {
       const response = await this.makeRequest<any>('chat.getPermalink', {
         channel: channelId,
-        message_ts: messageTs
+        message_ts: messageTs,
       });
 
       return {
         ok: response.ok,
         permalink: response.permalink,
-        error: response.error
+        error: response.error,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return {
         ok: false,
-        error: `Failed to get permalink: ${errorMessage}`
+        error: `Failed to get permalink: ${errorMessage}`,
       };
     }
   }
@@ -538,7 +558,7 @@ export class SlackClient {
       count: params.count || 3,
       page: params.page || 1,
       thread_replies: params.thread_replies !== false ? 1 : 0,
-      extract_len: params.extract_len || 110
+      extract_len: params.extract_len || 110,
     });
 
     return response;
@@ -583,7 +603,7 @@ export class SlackClient {
       extracts: params.extracts || 1,
       highlight: params.highlight !== undefined ? params.highlight : 1,
       max_extract_len: params.max_extract_len || 200,
-      search_exclude_bots: params.search_exclude_bots || 0
+      search_exclude_bots: params.search_exclude_bots || 0,
     });
 
     return response;
@@ -634,7 +654,7 @@ export class SlackClient {
       page: params.page || 1,
       sort: params.sort || 'desc',
       highlight: params.highlight !== false ? true : false,
-      ...(params.cursor && { cursor: params.cursor })
+      ...(params.cursor && { cursor: params.cursor }),
     });
 
     return response;
@@ -685,10 +705,57 @@ export class SlackClient {
       page: params.page || 1,
       sort: params.sort || 'score',
       sort_dir: params.sort_dir || 'desc',
-      highlight: params.highlight !== false ? true : false
+      highlight: params.highlight !== false ? true : false,
     });
 
     return response;
+  }
+
+  /**
+   * Get user profile information
+   */
+  async getUserProfile(userId: string): Promise<{
+    ok: boolean;
+    profile?: {
+      display_name?: string;
+      real_name?: string;
+      email?: string;
+      first_name?: string;
+      last_name?: string;
+      title?: string;
+      phone?: string;
+      image_24?: string;
+      image_32?: string;
+      image_48?: string;
+      image_72?: string;
+      image_192?: string;
+      image_512?: string;
+      status_text?: string;
+      status_emoji?: string;
+    };
+    error?: string;
+  }> {
+    try {
+      const response = await this.makeRequest<{
+        ok: boolean;
+        profile?: any;
+        error?: string;
+      }>('users.profile.get', {
+        user: userId,
+        _x_reason: 'MemberProfileFlexpane',
+        _x_mode: 'online',
+        _x_sonic: 'true',
+        _x_app_name: 'client',
+      });
+
+      return response;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return {
+        ok: false,
+        error: errorMessage,
+      };
+    }
   }
 
   async testConnection(): Promise<boolean> {

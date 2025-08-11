@@ -30,19 +30,23 @@ class ConnectionTestSuite {
 
   async runAllTests(): Promise<void> {
     console.log('🔄 Starting Connection and Tool Listing Test Suite...\n');
-    
+
     // Validate test configuration
     const configValidation = validateTestConfig();
     if (!configValidation.isValid) {
       console.log('⚠️  Test Configuration Issues:');
-      configValidation.issues.forEach(issue => console.log(`   - ${issue}`));
+      configValidation.issues.forEach((issue) => console.log(`   - ${issue}`));
       console.log('   Tests will run with placeholder data - results may not be meaningful\n');
     }
 
     const testConfig = getTestConfigWithEnvOverrides();
     console.log('📋 Test Configuration:');
-    console.log(`   - Test Channel: ${testConfig.channels.public.name} (${testConfig.channels.public.id})`);
-    console.log(`   - Test User: ${testConfig.users.test_user.name} (${testConfig.users.test_user.id})`);
+    console.log(
+      `   - Test Channel: ${testConfig.channels.public.name} (${testConfig.channels.public.id})`
+    );
+    console.log(
+      `   - Test User: ${testConfig.users.test_user.name} (${testConfig.users.test_user.id})`
+    );
     console.log(`   - Timeout: ${testConfig.test_limits.timeout_ms}ms\n`);
 
     try {
@@ -60,35 +64,38 @@ class ConnectionTestSuite {
 
   private async setupMCPConnection(): Promise<void> {
     const startTime = Date.now();
-    
+
     try {
       // Start the MCP server process
       this.serverProcess = spawn('node', ['../dist/index.js'], {
         cwd: process.cwd(),
-        stdio: 'pipe'
+        stdio: 'pipe',
       });
 
       // Create transport and client
       this.transport = new StdioClientTransport({
         command: 'node',
-        args: ['/Users/phucnt/Workspace/slack-browser-mcp-server/dist/index.js']
+        args: ['/Users/phucnt/Workspace/slack-browser-mcp-server/dist/index.js'],
       });
 
-      this.client = new Client({
-        name: 'test-client',
-        version: '1.0.0'
-      }, {
-        capabilities: {}
-      });
+      this.client = new Client(
+        {
+          name: 'test-client',
+          version: '1.0.0',
+        },
+        {
+          capabilities: {},
+        }
+      );
 
       // Connect to the server
       await this.client.connect(this.transport);
-      
+
       this.results.push({
         name: 'MCP Server Connection',
         status: 'PASS',
         duration: Date.now() - startTime,
-        message: 'Successfully connected to MCP server'
+        message: 'Successfully connected to MCP server',
       });
     } catch (error) {
       this.results.push({
@@ -96,7 +103,7 @@ class ConnectionTestSuite {
         status: 'FAIL',
         duration: Date.now() - startTime,
         message: `Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        details: error
+        details: error,
       });
       throw error;
     }
@@ -104,7 +111,7 @@ class ConnectionTestSuite {
 
   private async testServerConnection(): Promise<void> {
     const startTime = Date.now();
-    
+
     try {
       if (!this.client) {
         throw new Error('Client not initialized');
@@ -113,7 +120,7 @@ class ConnectionTestSuite {
       // Test basic server responsiveness with server_info tool call
       const response = await this.client.callTool({
         name: 'server_info',
-        arguments: {}
+        arguments: {},
       });
 
       if (!response.content || !Array.isArray(response.content) || response.content.length === 0) {
@@ -127,8 +134,8 @@ class ConnectionTestSuite {
         message: 'Server responds to ping tool calls',
         details: {
           response: response.content[0],
-          isError: response.isError
-        }
+          isError: response.isError,
+        },
       });
     } catch (error) {
       this.results.push({
@@ -136,14 +143,14 @@ class ConnectionTestSuite {
         status: 'FAIL',
         duration: Date.now() - startTime,
         message: `Ping test failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        details: error
+        details: error,
       });
     }
   }
 
   private async testToolListing(): Promise<void> {
     const startTime = Date.now();
-    
+
     try {
       if (!this.client) {
         throw new Error('Client not initialized');
@@ -151,7 +158,7 @@ class ConnectionTestSuite {
 
       // List all available tools
       const tools = await this.client.listTools();
-      
+
       if (!tools.tools || tools.tools.length === 0) {
         throw new Error('No tools returned from server');
       }
@@ -162,26 +169,33 @@ class ConnectionTestSuite {
       });
       console.log('');
 
-      // Verify expected tools are present - Phase 6.2 Time-Range Thread Collection
-      const toolNames = tools.tools.map(t => t.name);
+      // Verify expected tools are present - Phase 6.3 User Profile Tool
+      const toolNames = tools.tools.map((t) => t.name);
       const expectedTools = [
         // Messaging (4)
-        'post_message', 'update_message', 'delete_message', 'react_to_message',
-        // Data (3) 
-        'get_thread_replies', 'list_workspace_channels', 'list_workspace_users',
+        'post_message',
+        'update_message',
+        'delete_message',
+        'react_to_message',
+        // Data (4) - Phase 6.3
+        'get_thread_replies',
+        'list_workspace_channels',
+        'list_workspace_users',
+        'get_user_profile',
         // Enhanced Search (2)
-        'search_messages', 'search_files',
+        'search_messages',
+        'search_files',
         // Time-Range Thread Collection (1) - Phase 6.2
         'collect_threads_by_timerange',
         // System (1)
-        'server_info'
+        'server_info',
       ];
 
-      const missingTools = expectedTools.filter(tool => !toolNames.includes(tool));
+      const missingTools = expectedTools.filter((tool) => !toolNames.includes(tool));
       const extraInfo: any = {
         totalTools: tools.tools.length,
         toolNames: toolNames,
-        expectedTools: expectedTools
+        expectedTools: expectedTools,
       };
 
       if (missingTools.length > 0) {
@@ -191,7 +205,7 @@ class ConnectionTestSuite {
           status: 'FAIL',
           duration: Date.now() - startTime,
           message: `Missing expected tools: ${missingTools.join(', ')}`,
-          details: extraInfo
+          details: extraInfo,
         });
       } else {
         this.results.push({
@@ -199,7 +213,7 @@ class ConnectionTestSuite {
           status: 'PASS',
           duration: Date.now() - startTime,
           message: 'All expected tools are present',
-          details: extraInfo
+          details: extraInfo,
         });
       }
     } catch (error) {
@@ -208,14 +222,14 @@ class ConnectionTestSuite {
         status: 'FAIL',
         duration: Date.now() - startTime,
         message: `Tool listing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        details: error
+        details: error,
       });
     }
   }
 
   private async testToolCategories(): Promise<void> {
     const startTime = Date.now();
-    
+
     try {
       if (!this.client) {
         throw new Error('Client not initialized');
@@ -224,19 +238,24 @@ class ConnectionTestSuite {
       const tools = await this.client.listTools();
       const toolsByExpectedCategory = {
         messaging: ['post_message', 'update_message', 'delete_message', 'react_to_message'],
-        data: ['get_thread_replies', 'list_workspace_channels', 'list_workspace_users'],
+        data: [
+          'get_thread_replies',
+          'list_workspace_channels',
+          'list_workspace_users',
+          'get_user_profile',
+        ],
         search: ['search_messages', 'search_files'],
         collection: ['collect_threads_by_timerange'],
-        system: ['server_info']
+        system: ['server_info'],
       };
 
-      const toolNames = tools.tools.map(t => t.name);
+      const toolNames = tools.tools.map((t) => t.name);
       const categorizedTools: Record<string, string[]> = {};
       let uncategorizedTools: string[] = [];
 
       // Categorize existing tools
       for (const [category, expectedTools] of Object.entries(toolsByExpectedCategory)) {
-        const foundTools = expectedTools.filter(tool => toolNames.includes(tool));
+        const foundTools = expectedTools.filter((tool) => toolNames.includes(tool));
         if (foundTools.length > 0) {
           categorizedTools[category] = foundTools;
         }
@@ -244,14 +263,16 @@ class ConnectionTestSuite {
 
       // Find uncategorized tools
       const allCategorizedToolNames = Object.values(toolsByExpectedCategory).flat();
-      uncategorizedTools = toolNames.filter(tool => !allCategorizedToolNames.includes(tool));
+      uncategorizedTools = toolNames.filter((tool) => !allCategorizedToolNames.includes(tool));
 
       console.log('🏷️  Tool Categories:');
       for (const [category, tools] of Object.entries(categorizedTools)) {
         console.log(`   ${category}: ${tools.length} tools (${tools.join(', ')})`);
       }
       if (uncategorizedTools.length > 0) {
-        console.log(`   uncategorized: ${uncategorizedTools.length} tools (${uncategorizedTools.join(', ')})`);
+        console.log(
+          `   uncategorized: ${uncategorizedTools.length} tools (${uncategorizedTools.join(', ')})`
+        );
       }
       console.log('');
 
@@ -263,8 +284,8 @@ class ConnectionTestSuite {
         details: {
           categorizedTools,
           uncategorizedTools,
-          totalCategories: Object.keys(categorizedTools).length
-        }
+          totalCategories: Object.keys(categorizedTools).length,
+        },
       });
     } catch (error) {
       this.results.push({
@@ -272,14 +293,14 @@ class ConnectionTestSuite {
         status: 'FAIL',
         duration: Date.now() - startTime,
         message: `Tool categorization failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        details: error
+        details: error,
       });
     }
   }
 
   private async validateCriticalTools(): Promise<void> {
     const startTime = Date.now();
-    
+
     try {
       if (!this.client) {
         throw new Error('Client not initialized');
@@ -289,19 +310,19 @@ class ConnectionTestSuite {
       const tools = await this.client.listTools();
       const criticalTools = [
         'post_message',
-        'react_to_message', 
+        'react_to_message',
         'get_thread_replies',
         'list_workspace_channels',
         'list_workspace_users',
         'search_channel_messages',
-        'server_info'
+        'server_info',
       ];
 
       const toolSchemaValidation: any = {};
       let allValid = true;
 
       for (const toolName of criticalTools) {
-        const tool = tools.tools.find(t => t.name === toolName);
+        const tool = tools.tools.find((t) => t.name === toolName);
         if (!tool) {
           toolSchemaValidation[toolName] = { present: false };
           allValid = false;
@@ -313,12 +334,15 @@ class ConnectionTestSuite {
           hasDescription: !!tool.description && tool.description.length > 0,
           hasInputSchema: !!tool.inputSchema,
           hasProperties: !!tool.inputSchema?.properties,
-          propertyCount: tool.inputSchema?.properties ? Object.keys(tool.inputSchema.properties).length : 0,
-          hasRequired: Array.isArray(tool.inputSchema?.required) && tool.inputSchema.required.length > 0
+          propertyCount: tool.inputSchema?.properties
+            ? Object.keys(tool.inputSchema.properties).length
+            : 0,
+          hasRequired:
+            Array.isArray(tool.inputSchema?.required) && tool.inputSchema.required.length > 0,
         };
 
         toolSchemaValidation[toolName] = validation;
-        
+
         if (!validation.hasDescription || !validation.hasInputSchema || !validation.hasProperties) {
           allValid = false;
         }
@@ -328,8 +352,10 @@ class ConnectionTestSuite {
         name: 'Critical Tool Schema Validation',
         status: allValid ? 'PASS' : 'FAIL',
         duration: Date.now() - startTime,
-        message: allValid ? 'All critical tools have proper schemas' : 'Some critical tools have schema issues',
-        details: toolSchemaValidation
+        message: allValid
+          ? 'All critical tools have proper schemas'
+          : 'Some critical tools have schema issues',
+        details: toolSchemaValidation,
       });
     } catch (error) {
       this.results.push({
@@ -337,7 +363,7 @@ class ConnectionTestSuite {
         status: 'FAIL',
         duration: Date.now() - startTime,
         message: `Schema validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        details: error
+        details: error,
       });
     }
   }
@@ -349,7 +375,7 @@ class ConnectionTestSuite {
       }
       if (this.serverProcess) {
         this.serverProcess.kill();
-        await new Promise(resolve => {
+        await new Promise((resolve) => {
           this.serverProcess.on('exit', resolve);
           setTimeout(resolve, 2000); // Force cleanup after 2s
         });
@@ -361,13 +387,13 @@ class ConnectionTestSuite {
 
   private printResults(): void {
     console.log('📊 Test Results Summary:\n');
-    
+
     const totalTests = this.results.length;
-    const passedTests = this.results.filter(r => r.status === 'PASS').length;
-    const failedTests = this.results.filter(r => r.status === 'FAIL').length;
-    const skippedTests = this.results.filter(r => r.status === 'SKIP').length;
-    
-    this.results.forEach(result => {
+    const passedTests = this.results.filter((r) => r.status === 'PASS').length;
+    const failedTests = this.results.filter((r) => r.status === 'FAIL').length;
+    const skippedTests = this.results.filter((r) => r.status === 'SKIP').length;
+
+    this.results.forEach((result) => {
       const statusIcon = result.status === 'PASS' ? '✅' : result.status === 'FAIL' ? '❌' : '⏭️';
       const duration = `(${result.duration}ms)`;
       console.log(`${statusIcon} ${result.name} ${duration}`);
@@ -383,9 +409,11 @@ class ConnectionTestSuite {
     console.log(`Summary: ${passedTests}/${totalTests} tests passed`);
     if (failedTests > 0) console.log(`❌ ${failedTests} tests failed`);
     if (skippedTests > 0) console.log(`⏭️ ${skippedTests} tests skipped`);
-    
-    console.log(`\n🏁 Connection and Tool Listing Test Suite ${failedTests === 0 ? 'PASSED' : 'FAILED'}`);
-    
+
+    console.log(
+      `\n🏁 Connection and Tool Listing Test Suite ${failedTests === 0 ? 'PASSED' : 'FAILED'}`
+    );
+
     if (failedTests > 0) {
       process.exit(1);
     }
@@ -395,7 +423,7 @@ class ConnectionTestSuite {
 // Run tests if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const testSuite = new ConnectionTestSuite();
-  testSuite.runAllTests().catch(error => {
+  testSuite.runAllTests().catch((error) => {
     console.error('Test suite failed with error:', error);
     process.exit(1);
   });
