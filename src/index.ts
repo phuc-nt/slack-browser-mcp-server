@@ -5,8 +5,10 @@ import { SlackMCPServer } from './server.js';
 import { logger } from './utils/logger.js';
 
 async function main(): Promise<void> {
-  console.log('[DEBUG INDEX] ===== SLACK MCP SERVER STARTING =====');
-  console.log('[DEBUG INDEX] This is the TOOL-ONLY architecture version');
+  logger.info('Slack MCP Server starting', {
+    architecture: 'tool-only',
+    environment: process.env.NODE_ENV || 'production',
+  });
   logger.info('Initializing Slack MCP Server');
 
   const server = new SlackMCPServer();
@@ -34,7 +36,6 @@ async function main(): Promise<void> {
 
 // Always run main function since this is the entry point
 main().catch((error) => {
-  console.error('[DEBUG INDEX] Main function error:', error);
-  logger.error('Unhandled error in main', { error });
+  logger.error('Unhandled error in main function', { error });
   process.exit(1);
 });

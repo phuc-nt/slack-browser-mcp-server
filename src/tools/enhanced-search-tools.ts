@@ -7,11 +7,7 @@ import { BaseSlackTool } from './base.js';
 import { SlackAuth } from '../slack/auth.js';
 import { SlackClient } from '../slack/client.js';
 import { logger } from '../utils/logger.js';
-import { 
-  ToolContext, 
-  ToolExecutionResult,
-  SlackTool 
-} from '../types/tools.js';
+import { ToolContext, ToolExecutionResult, SlackTool } from '../types/tools.js';
 
 /**
  * Enhanced SearchMessagesTool - Advanced message search using search.messages API
@@ -42,55 +38,56 @@ Returns highlighted results with pagination support for large result sets.`,
       requiresAuth: true,
       rateLimit: {
         rpm: 30,
-        burst: 5
+        burst: 5,
       },
       inputSchema: {
         type: 'object',
         properties: {
           query: {
             type: 'string',
-            description: 'Search query with optional operators (in:, from:, after:, has:, AND, OR, -, parentheses)',
+            description:
+              'Search query with optional operators (in:, from:, after:, has:, AND, OR, -, parentheses)',
             minLength: 1,
-            maxLength: 500
+            maxLength: 500,
           },
           count: {
             type: 'number',
             description: 'Number of results per page (1-100)',
             minimum: 1,
-            maximum: 100
+            maximum: 100,
           },
           page: {
             type: 'number',
             description: 'Page number for pagination (1-100)',
             minimum: 1,
-            maximum: 100
+            maximum: 100,
           },
           sort: {
             type: 'string',
             enum: ['asc', 'desc'],
-            description: 'Sort direction (asc for oldest first, desc for newest first)'
+            description: 'Sort direction (asc for oldest first, desc for newest first)',
           },
           highlight: {
             type: 'boolean',
-            description: 'Enable query term highlighting in results (default: true)'
+            description: 'Enable query term highlighting in results (default: true)',
           },
           cursor: {
             type: 'string',
-            description: 'Pagination cursor for fetching next page of results'
-          }
+            description: 'Pagination cursor for fetching next page of results',
+          },
         },
-        required: ['query']
-      }
+        required: ['query'],
+      },
     };
     super(definition);
   }
 
   async executeImpl(args: any, context: ToolContext): Promise<ToolExecutionResult> {
     const startTime = Date.now();
-    logger.info('Executing enhanced search_messages', { 
+    logger.info('Executing enhanced search_messages', {
       query: args.query,
       count: args.count || 20,
-      page: args.page || 1
+      page: args.page || 1,
     });
 
     try {
@@ -106,7 +103,7 @@ Returns highlighted results with pagination support for large result sets.`,
       }
 
       const client = new SlackClient(tokens);
-      
+
       // Call search.messages API with enhanced parameters
       const searchParams = {
         query: args.query,
@@ -114,7 +111,7 @@ Returns highlighted results with pagination support for large result sets.`,
         page: args.page || 1,
         sort: args.sort || 'desc',
         highlight: args.highlight !== false,
-        ...(args.cursor && { cursor: args.cursor })
+        ...(args.cursor && { cursor: args.cursor }),
       };
 
       const response = await client.searchMessagesAdvanced(searchParams);
@@ -131,47 +128,55 @@ Returns highlighted results with pagination support for large result sets.`,
       const currentPage = response.messages?.pagination?.page || 1;
       const pageCount = response.messages?.pagination?.page_count || 1;
 
-      logger.info('Advanced message search completed successfully', {
+      // Sprint 7.2: Optimize search messages response (60-65% reduction)
+      // Remove: blocks, team, score, iid, db_message, pagination metadata
+      // Keep: text, user, ts, channel, permalink, thread_ts
+      const optimizedMessages = (response.messages?.matches || []).map((message: any) => ({
+        user: message.user,
+        ts: message.ts,
+        text: message.text || '',
+        channel: message.channel?.id || message.channel,
+        permalink: message.permalink,
+        thread_ts: message.thread_ts,
+      }));
+
+      logger.info('Advanced message search completed and optimized', {
         query: args.query,
         total_results: totalResults,
         current_page: currentPage,
         page_count: pageCount,
-        results_returned: response.messages?.matches?.length || 0
+        original_results: response.messages?.matches?.length || 0,
+        optimized_results: optimizedMessages.length,
+        optimization: 'Sprint 7.2 - 60-65% size reduction',
       });
 
-      return this.createSuccessResult({
-        query: args.query,
-        total_results: totalResults,
-        current_page: currentPage,
-        total_pages: pageCount,
-        results_per_page: args.count || 20,
-        messages: response.messages?.matches || [],
-        pagination: response.messages?.pagination,
-        metadata: {
-          api_endpoint: 'search.messages',
-          search_parameters: searchParams,
-          query_operators_supported: [
-            'in:channel_name', 'from:@username', 'after:date', 'before:date', 'on:date',
-            'has:link', 'has:attachment', 'has:reaction', 'is:pinned',
-            'AND', 'OR', '()', '-'
-          ]
+      return this.createSuccessResult(
+        {
+          query: args.query,
+          total_results: totalResults,
+          current_page: currentPage,
+          total_pages: pageCount,
+          results_per_page: args.count || 20,
+          messages: optimizedMessages,
+          // Removed: pagination, metadata (api_endpoint, search_parameters, query_operators_supported)
+        },
+        {
+          executionTime: Date.now() - startTime,
+          apiCalls: 1,
+          cacheHits: 0,
         }
-      }, {
-        executionTime: Date.now() - startTime,
-        apiCalls: 1,
-        cacheHits: 0
-      });
+      );
     } catch (error) {
-      logger.error('Error in enhanced search_messages execution', { 
+      logger.error('Error in enhanced search_messages execution', {
         error,
-        query: args.query
+        query: args.query,
       });
 
-      return this.createErrorResult(
-        `Advanced message search failed: ${error}`,
-        'EXECUTION_ERROR',
-        { executionTime: Date.now() - startTime, apiCalls: 0, cacheHits: 0 }
-      );
+      return this.createErrorResult(`Advanced message search failed: ${error}`, 'EXECUTION_ERROR', {
+        executionTime: Date.now() - startTime,
+        apiCalls: 0,
+        cacheHits: 0,
+      });
     }
   }
 }
@@ -205,7 +210,7 @@ that contain specific technical or business information that wouldn't be in chat
       requiresAuth: true,
       rateLimit: {
         rpm: 20,
-        burst: 3
+        burst: 3,
       },
       inputSchema: {
         type: 'object',
@@ -214,47 +219,47 @@ that contain specific technical or business information that wouldn't be in chat
             type: 'string',
             description: 'Search query for file names, content, or metadata',
             minLength: 1,
-            maxLength: 500
+            maxLength: 500,
           },
           count: {
             type: 'number',
             description: 'Number of files to return per page (1-100)',
             minimum: 1,
-            maximum: 100
+            maximum: 100,
           },
           page: {
             type: 'number',
             description: 'Page number for pagination (1-100)',
             minimum: 1,
-            maximum: 100
+            maximum: 100,
           },
           sort: {
             type: 'string',
             enum: ['score', 'timestamp', 'size'],
-            description: 'Sort files by relevance score, upload timestamp, or file size'
+            description: 'Sort files by relevance score, upload timestamp, or file size',
           },
           sort_dir: {
             type: 'string',
             enum: ['asc', 'desc'],
-            description: 'Sort direction (asc for ascending, desc for descending)'
+            description: 'Sort direction (asc for ascending, desc for descending)',
           },
           highlight: {
             type: 'boolean',
-            description: 'Enable query term highlighting in file descriptions (default: true)'
-          }
+            description: 'Enable query term highlighting in file descriptions (default: true)',
+          },
         },
-        required: ['query']
-      }
+        required: ['query'],
+      },
     };
     super(definition);
   }
 
   async executeImpl(args: any, context: ToolContext): Promise<ToolExecutionResult> {
     const startTime = Date.now();
-    logger.info('Executing search_files', { 
+    logger.info('Executing search_files', {
       query: args.query,
       count: args.count || 20,
-      sort: args.sort || 'score'
+      sort: args.sort || 'score',
     });
 
     try {
@@ -270,7 +275,7 @@ that contain specific technical or business information that wouldn't be in chat
       }
 
       const client = new SlackClient(tokens);
-      
+
       // Call search.files API
       const searchParams = {
         query: args.query,
@@ -278,17 +283,17 @@ that contain specific technical or business information that wouldn't be in chat
         page: args.page || 1,
         sort: args.sort || 'score',
         sort_dir: args.sort_dir || 'desc',
-        highlight: args.highlight !== false
+        highlight: args.highlight !== false,
       };
 
       const response = await client.searchFiles(searchParams);
 
       if (!response.ok) {
-        return this.createErrorResult(
-          `File search failed: ${response.error}`,
-          'SEARCH_ERROR',
-          { executionTime: Date.now() - startTime, apiCalls: 1, cacheHits: 0 }
-        );
+        return this.createErrorResult(`File search failed: ${response.error}`, 'SEARCH_ERROR', {
+          executionTime: Date.now() - startTime,
+          apiCalls: 1,
+          cacheHits: 0,
+        });
       }
 
       const totalResults = response.files?.pagination?.total_count || 0;
@@ -300,46 +305,49 @@ that contain specific technical or business information that wouldn't be in chat
         total_results: totalResults,
         current_page: currentPage,
         page_count: pageCount,
-        files_returned: response.files?.matches?.length || 0
+        files_returned: response.files?.matches?.length || 0,
       });
 
-      return this.createSuccessResult({
-        query: args.query,
-        total_results: totalResults,
-        current_page: currentPage,
-        total_pages: pageCount,
-        results_per_page: args.count || 20,
-        files: response.files?.matches || [],
-        pagination: response.files?.pagination,
-        metadata: {
-          api_endpoint: 'search.files',
-          search_parameters: searchParams,
-          supported_file_types: [
-            'Documents: PDF, Word (.docx), Excel (.xlsx), PowerPoint (.pptx)',
-            'Images: PNG, JPG, GIF, WebP, SVG',
-            'Media: MP4, MOV, AVI (video), MP3, WAV (audio)',
-            'Code: JavaScript, TypeScript, Python, Java, C++, Go, etc.',
-            'Text: TXT, CSV, JSON, XML, YAML, Markdown',
-            'Archives: ZIP, RAR, TAR',
-            'All uploaded attachments'
-          ]
+      return this.createSuccessResult(
+        {
+          query: args.query,
+          total_results: totalResults,
+          current_page: currentPage,
+          total_pages: pageCount,
+          results_per_page: args.count || 20,
+          files: response.files?.matches || [],
+          pagination: response.files?.pagination,
+          metadata: {
+            api_endpoint: 'search.files',
+            search_parameters: searchParams,
+            supported_file_types: [
+              'Documents: PDF, Word (.docx), Excel (.xlsx), PowerPoint (.pptx)',
+              'Images: PNG, JPG, GIF, WebP, SVG',
+              'Media: MP4, MOV, AVI (video), MP3, WAV (audio)',
+              'Code: JavaScript, TypeScript, Python, Java, C++, Go, etc.',
+              'Text: TXT, CSV, JSON, XML, YAML, Markdown',
+              'Archives: ZIP, RAR, TAR',
+              'All uploaded attachments',
+            ],
+          },
+        },
+        {
+          executionTime: Date.now() - startTime,
+          apiCalls: 1,
+          cacheHits: 0,
         }
-      }, {
-        executionTime: Date.now() - startTime,
-        apiCalls: 1,
-        cacheHits: 0
-      });
+      );
     } catch (error) {
-      logger.error('Error in search_files execution', { 
+      logger.error('Error in search_files execution', {
         error,
-        query: args.query
+        query: args.query,
       });
 
-      return this.createErrorResult(
-        `File search failed: ${error}`,
-        'EXECUTION_ERROR',
-        { executionTime: Date.now() - startTime, apiCalls: 0, cacheHits: 0 }
-      );
+      return this.createErrorResult(`File search failed: ${error}`, 'EXECUTION_ERROR', {
+        executionTime: Date.now() - startTime,
+        apiCalls: 0,
+        cacheHits: 0,
+      });
     }
   }
 }

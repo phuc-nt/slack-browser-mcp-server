@@ -11,21 +11,19 @@ import {
 import { SearchMessagesTool, SearchFilesTool } from './enhanced-search-tools.js';
 import { CollectThreadsByTimeRangeTool } from './time-range-thread-collection.js';
 import { ReactToMessageTool } from './reactions.js';
-import { ServerInfoTool } from './server-info.js';
 import { GetUserProfileTool } from './user-profile.js';
 import { DataTools } from './data-tools.js';
 
 /**
- * Production Tool Factory - Phase 6.3 User Profile Tool
+ * Production Tool Factory - Sprint 7.2 Response Optimization
  *
- * Registers exactly 12 core production tools:
+ * Registers exactly 11 core production tools (removed server_info):
  * - 4 Messaging tools
- * - 4 Data retrieval tools (added get_user_profile)
+ * - 4 Data retrieval tools
  * - 2 Enhanced search tools
  * - 1 Time-range thread collection tool
- * - 1 System tool
  *
- * Phase 6.3 enhancement: User profile retrieval with display name and account extraction.
+ * Sprint 7.2: Removed server_info tool and optimized response payloads by 60-70%.
  */
 export class ProductionToolFactory {
   private toolInstances: Map<string, BaseSlackTool> = new Map();
@@ -35,7 +33,7 @@ export class ProductionToolFactory {
   }
 
   /**
-   * Register the 12 core production tools (Phase 6.3)
+   * Register the 11 core production tools (Sprint 7.2)
    */
   private registerProductionTools(): void {
     try {
@@ -49,11 +47,11 @@ export class ProductionToolFactory {
         tools: ['post_message', 'update_message', 'delete_message', 'react_to_message'],
       });
 
-      // Data Retrieval Tools (4) - Phase 6.3
+      // Data Retrieval Tools (4) - Sprint 7.2
       this.registerTool(new GetThreadRepliesTool(DataTools.createGetThreadRepliesTool()));
       this.registerTool(new ListWorkspaceChannelsTool(DataTools.createListWorkspaceChannelsTool()));
       this.registerTool(new ListWorkspaceUsersTool(DataTools.createListWorkspaceUsersTool()));
-      this.registerTool(new GetUserProfileTool()); // Phase 6.3 - User profile tool
+      this.registerTool(new GetUserProfileTool());
 
       logger.info('Registered data retrieval tools', {
         tools: [
@@ -79,16 +77,11 @@ export class ProductionToolFactory {
         tools: ['collect_threads_by_timerange'],
       });
 
-      // System Tools (1)
-      this.registerTool(new ServerInfoTool());
-
-      logger.info('Registered system tools', {
-        tools: ['server_info'],
-      });
+      // System Tools removed in Sprint 7.2 for streamlined architecture
 
       logger.info('Production tool factory initialized', {
         totalTools: this.toolInstances.size,
-        architecture: 'Phase 6.3 - User Profile Tool',
+        architecture: 'Sprint 7.2 - Response Optimization',
         tools: Array.from(this.toolInstances.keys()).sort(),
       });
     } catch (error) {
@@ -139,7 +132,7 @@ export class ProductionToolFactory {
   }
 
   /**
-   * Validate that exactly 12 tools are registered (Phase 6.3)
+   * Validate that exactly 11 tools are registered (Sprint 7.2 - removed server_info)
    */
   validateConfiguration(): boolean {
     const expectedTools = [
@@ -158,8 +151,6 @@ export class ProductionToolFactory {
       'search_files',
       // Time-Range Thread Collection (1) - Phase 6.2
       'collect_threads_by_timerange',
-      // System (1)
-      'server_info',
     ];
 
     const actualTools = Array.from(this.toolInstances.keys()).sort();

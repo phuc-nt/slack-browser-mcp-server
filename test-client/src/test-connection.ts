@@ -117,9 +117,10 @@ class ConnectionTestSuite {
         throw new Error('Client not initialized');
       }
 
-      // Test basic server responsiveness with server_info tool call
+      // Test basic server responsiveness with list_workspace_channels tool call
+      // This is a lightweight tool that doesn't require specific parameters
       const response = await this.client.callTool({
-        name: 'server_info',
+        name: 'list_workspace_channels',
         arguments: {},
       });
 
@@ -131,9 +132,9 @@ class ConnectionTestSuite {
         name: 'Server Responsiveness (Ping)',
         status: 'PASS',
         duration: Date.now() - startTime,
-        message: 'Server responds to ping tool calls',
+        message: 'Server responds to tool calls',
         details: {
-          response: response.content[0],
+          response: 'Successfully called list_workspace_channels',
           isError: response.isError,
         },
       });
@@ -169,7 +170,7 @@ class ConnectionTestSuite {
       });
       console.log('');
 
-      // Verify expected tools are present - Phase 6.3 User Profile Tool
+      // Verify expected tools are present - Sprint 7.2: 11 tools (removed server_info)
       const toolNames = tools.tools.map((t) => t.name);
       const expectedTools = [
         // Messaging (4)
@@ -187,8 +188,6 @@ class ConnectionTestSuite {
         'search_files',
         // Time-Range Thread Collection (1) - Phase 6.2
         'collect_threads_by_timerange',
-        // System (1)
-        'server_info',
       ];
 
       const missingTools = expectedTools.filter((tool) => !toolNames.includes(tool));
@@ -246,7 +245,6 @@ class ConnectionTestSuite {
         ],
         search: ['search_messages', 'search_files'],
         collection: ['collect_threads_by_timerange'],
-        system: ['server_info'],
       };
 
       const toolNames = tools.tools.map((t) => t.name);
@@ -314,8 +312,7 @@ class ConnectionTestSuite {
         'get_thread_replies',
         'list_workspace_channels',
         'list_workspace_users',
-        'search_channel_messages',
-        'server_info',
+        'search_messages',
       ];
 
       const toolSchemaValidation: any = {};

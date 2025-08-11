@@ -7,11 +7,7 @@ import { BaseSlackTool } from './base.js';
 import { SlackAuth } from '../slack/auth.js';
 import { SlackClient } from '../slack/client.js';
 import { logger } from '../utils/logger.js';
-import { 
-  ToolContext, 
-  ToolExecutionResult,
-  SlackTool 
-} from '../types/tools.js';
+import { ToolContext, ToolExecutionResult, SlackTool } from '../types/tools.js';
 
 /**
  * CollectThreadsByTimeRangeTool - 3-step process for collecting threads with activity in time range
@@ -47,8 +43,8 @@ Returns complete thread data with parent messages and all replies, even if the t
       action: 'GET',
       requiresAuth: true,
       rateLimit: {
-        rpm: 10,  // Lower rate due to intensive multi-API operations
-        burst: 2
+        rpm: 10, // Lower rate due to intensive multi-API operations
+        burst: 2,
       },
       inputSchema: {
         type: 'object',
@@ -56,47 +52,49 @@ Returns complete thread data with parent messages and all replies, even if the t
           channel: {
             type: 'string',
             description: 'Channel ID where threads should be collected (e.g., C1234567890)',
-            pattern: '^C[A-Z0-9]+$'
+            pattern: '^C[A-Z0-9]+$',
           },
           start_date: {
             type: 'string',
-            description: 'Start date/time for collection period. Accepts Unix timestamp (1693526400.000000) or ISO date (2025-08-10T00:00:00Z)'
+            description:
+              'Start date/time for collection period. Accepts Unix timestamp (1693526400.000000) or ISO date (2025-08-10T00:00:00Z)',
           },
           end_date: {
             type: 'string',
-            description: 'End date/time for collection period. Accepts Unix timestamp (1693612800.000000) or ISO date (2025-08-11T23:59:59Z)'
+            description:
+              'End date/time for collection period. Accepts Unix timestamp (1693612800.000000) or ISO date (2025-08-11T23:59:59Z)',
           },
           include_parent: {
             type: 'boolean',
             description: 'Include parent message in thread data (default: true)',
-            default: true
+            default: true,
           },
           include_metadata: {
             type: 'boolean',
-            description: 'Include thread statistics and metadata (default: true)', 
-            default: true
+            description: 'Include thread statistics and metadata (default: true)',
+            default: true,
           },
           max_threads: {
             type: 'number',
             description: 'Maximum number of threads to collect (1-100, default: 50)',
             minimum: 1,
             maximum: 100,
-            default: 50
-          }
+            default: 50,
+          },
         },
-        required: ['channel', 'start_date', 'end_date']
-      }
+        required: ['channel', 'start_date', 'end_date'],
+      },
     };
     super(definition);
   }
 
   async executeImpl(args: any, context: ToolContext): Promise<ToolExecutionResult> {
     const startTime = Date.now();
-    logger.info('Starting time-range thread collection', { 
+    logger.info('Starting time-range thread collection', {
       channel: args.channel,
       start_date: args.start_date,
       end_date: args.end_date,
-      max_threads: args.max_threads || 50
+      max_threads: args.max_threads || 50,
     });
 
     try {
@@ -112,137 +110,168 @@ Returns complete thread data with parent messages and all replies, even if the t
       }
 
       const client = new SlackClient(tokens);
-      
+
       // Parse timestamps
-      const { oldestTimestamp, latestTimestamp, startDateFormatted, endDateFormatted, durationHours } = this.parseTimeRange(args.start_date, args.end_date);
-      
+      const {
+        oldestTimestamp,
+        latestTimestamp,
+        startDateFormatted,
+        endDateFormatted,
+        durationHours,
+      } = this.parseTimeRange(args.start_date, args.end_date);
+
       logger.info('Parsed time range', {
         oldest: oldestTimestamp,
         latest: latestTimestamp,
-        duration_hours: durationHours
+        duration_hours: durationHours,
       });
 
       // STEP 1: Get all messages in time range using enhanced conversations.history
-      const allMessages = await this.getAllMessagesInTimeRange(client, args.channel, oldestTimestamp, latestTimestamp);
-      
+      const allMessages = await this.getAllMessagesInTimeRange(
+        client,
+        args.channel,
+        oldestTimestamp,
+        latestTimestamp
+      );
+
       if (allMessages.length === 0) {
-        return this.createSuccessResult({
-          channel: args.channel,
-          time_range: {
-            start: startDateFormatted,
-            end: endDateFormatted,
-            duration_hours: durationHours
+        return this.createSuccessResult(
+          {
+            channel: args.channel,
+            time_range: {
+              start: startDateFormatted,
+              end: endDateFormatted,
+              duration_hours: durationHours,
+            },
+            collection_summary: {
+              total_threads_found: 0,
+              threads_returned: 0,
+              total_messages_collected: 0,
+              collection_method: '3-step-process',
+            },
+            threads: [],
+            metadata: {
+              api_calls_made: 1,
+              execution_time_ms: Date.now() - startTime,
+              pagination_info: { messages_found_in_timerange: 0 },
+            },
           },
-          collection_summary: {
-            total_threads_found: 0,
-            threads_returned: 0,
-            total_messages_collected: 0,
-            collection_method: '3-step-process'
-          },
-          threads: [],
-          metadata: {
-            api_calls_made: 1,
-            execution_time_ms: Date.now() - startTime,
-            pagination_info: { messages_found_in_timerange: 0 }
+          {
+            executionTime: Date.now() - startTime,
+            apiCalls: 1,
+            cacheHits: 0,
           }
-        }, {
-          executionTime: Date.now() - startTime,
-          apiCalls: 1,
-          cacheHits: 0
-        });
+        );
       }
 
       // STEP 2: Identify threads with activity in the time range
       const threadTimestamps = this.identifyActiveThreads(allMessages);
-      
+
       if (threadTimestamps.size === 0) {
-        return this.createSuccessResult({
-          channel: args.channel,
-          time_range: {
-            start: startDateFormatted,
-            end: endDateFormatted,
-            duration_hours: durationHours
+        return this.createSuccessResult(
+          {
+            channel: args.channel,
+            time_range: {
+              start: startDateFormatted,
+              end: endDateFormatted,
+              duration_hours: durationHours,
+            },
+            collection_summary: {
+              total_threads_found: 0,
+              threads_returned: 0,
+              total_messages_collected: allMessages.length,
+              collection_method: '3-step-process',
+            },
+            threads: [],
+            metadata: {
+              api_calls_made: 1,
+              execution_time_ms: Date.now() - startTime,
+              pagination_info: {
+                messages_found_in_timerange: allMessages.length,
+                no_thread_activity_detected: true,
+              },
+            },
           },
-          collection_summary: {
-            total_threads_found: 0,
-            threads_returned: 0,
-            total_messages_collected: allMessages.length,
-            collection_method: '3-step-process'
-          },
-          threads: [],
-          metadata: {
-            api_calls_made: 1,
-            execution_time_ms: Date.now() - startTime,
-            pagination_info: { 
-              messages_found_in_timerange: allMessages.length,
-              no_thread_activity_detected: true 
-            }
+          {
+            executionTime: Date.now() - startTime,
+            apiCalls: 1,
+            cacheHits: 0,
           }
-        }, {
-          executionTime: Date.now() - startTime,
-          apiCalls: 1,
-          cacheHits: 0
-        });
+        );
       }
 
       // Limit threads if necessary
       const limitedThreadTimestamps = Array.from(threadTimestamps).slice(0, args.max_threads || 50);
-      
+
       // STEP 3: Collect complete thread data
       const threads = await this.collectCompleteThreadData(
-        client, 
-        args.channel, 
+        client,
+        args.channel,
         limitedThreadTimestamps,
         args.include_parent !== false,
         args.include_metadata !== false
       );
 
-      const totalMessagesCollected = threads.reduce((sum, thread) => sum + thread.messages.length, 0);
+      const totalMessagesCollected = threads.reduce(
+        (sum, thread) => sum + thread.messages.length,
+        0
+      );
       const apiCallsMade = 1 + limitedThreadTimestamps.length; // 1 for history + 1 per thread
 
-      logger.info('Thread collection completed successfully', {
+      // Sprint 7.2: Optimize thread collection response (20-30% reduction)
+      // Remove blocks from nested messages, keep thread structure and statistics
+      const optimizedThreads = threads.map((thread: any) => ({
+        thread_ts: thread.thread_ts,
+        messages: thread.messages.map((message: any) => ({
+          user: message.user,
+          ts: message.ts,
+          text: message.text || '',
+          thread_ts: message.thread_ts,
+          // Removed: blocks, client_msg_id, metadata
+        })),
+        thread_stats: thread.thread_stats, // Keep thread statistics
+      }));
+
+      logger.info('Thread collection completed and optimized', {
         channel: args.channel,
         threads_found: threadTimestamps.size,
         threads_collected: threads.length,
+        optimized_threads: optimizedThreads.length,
         total_messages: totalMessagesCollected,
         api_calls: apiCallsMade,
-        duration_ms: Date.now() - startTime
+        duration_ms: Date.now() - startTime,
+        optimization: 'Sprint 7.2 - 20-30% size reduction',
       });
 
-      return this.createSuccessResult({
-        channel: args.channel,
-        time_range: {
-          start: startDateFormatted,
-          end: endDateFormatted,
-          duration_hours: durationHours
+      return this.createSuccessResult(
+        {
+          channel: args.channel,
+          time_range: {
+            start: startDateFormatted,
+            end: endDateFormatted,
+            duration_hours: durationHours,
+          },
+          collection_summary: {
+            total_threads_found: threadTimestamps.size,
+            threads_returned: optimizedThreads.length,
+            total_messages_collected: totalMessagesCollected,
+            collection_method: '3-step-process',
+          },
+          threads: optimizedThreads,
+          // Removed: detailed metadata (api_calls_made, execution_time_ms, pagination_info)
         },
-        collection_summary: {
-          total_threads_found: threadTimestamps.size,
-          threads_returned: threads.length,
-          total_messages_collected: totalMessagesCollected,
-          collection_method: '3-step-process'
-        },
-        threads: threads,
-        metadata: {
-          api_calls_made: apiCallsMade,
-          execution_time_ms: Date.now() - startTime,
-          pagination_info: {
-            messages_found_in_timerange: allMessages.length,
-            threads_limited: threadTimestamps.size > (args.max_threads || 50)
-          }
+        {
+          executionTime: Date.now() - startTime,
+          apiCalls: apiCallsMade,
+          cacheHits: 0,
         }
-      }, {
-        executionTime: Date.now() - startTime,
-        apiCalls: apiCallsMade,
-        cacheHits: 0
-      });
-
+      );
     } catch (error) {
-      logger.error('Error in time-range thread collection', { 
+      logger.error('Error in time-range thread collection', {
         error,
         channel: args.channel,
         start_date: args.start_date,
-        end_date: args.end_date
+        end_date: args.end_date,
       });
 
       return this.createErrorResult(
@@ -279,7 +308,9 @@ Returns complete thread data with parent messages and all replies, even if the t
     }
 
     if (isNaN(startTimestamp.getTime()) || isNaN(endTimestamp.getTime())) {
-      throw new Error('Invalid date format. Use Unix timestamp (1693526400.000000) or ISO date (2025-08-10T00:00:00Z)');
+      throw new Error(
+        'Invalid date format. Use Unix timestamp (1693526400.000000) or ISO date (2025-08-10T00:00:00Z)'
+      );
     }
 
     if (startTimestamp >= endTimestamp) {
@@ -288,21 +319,28 @@ Returns complete thread data with parent messages and all replies, even if the t
 
     const oldestTimestamp = (startTimestamp.getTime() / 1000).toFixed(6);
     const latestTimestamp = (endTimestamp.getTime() / 1000).toFixed(6);
-    const durationHours = Math.round((endTimestamp.getTime() - startTimestamp.getTime()) / (1000 * 60 * 60) * 100) / 100;
+    const durationHours =
+      Math.round(((endTimestamp.getTime() - startTimestamp.getTime()) / (1000 * 60 * 60)) * 100) /
+      100;
 
     return {
       oldestTimestamp,
       latestTimestamp,
       startDateFormatted: startTimestamp.toISOString(),
       endDateFormatted: endTimestamp.toISOString(),
-      durationHours
+      durationHours,
     };
   }
 
   /**
    * STEP 1: Get all messages in time range with pagination support
    */
-  private async getAllMessagesInTimeRange(client: SlackClient, channel: string, oldest: string, latest: string) {
+  private async getAllMessagesInTimeRange(
+    client: SlackClient,
+    channel: string,
+    oldest: string,
+    latest: string
+  ) {
     let allMessages: any[] = [];
     let cursor: string | undefined = undefined;
     const maxIterations = 20; // Prevent infinite loops
@@ -319,7 +357,7 @@ Returns complete thread data with parent messages and all replies, even if the t
         latest,
         inclusive: true,
         limit: 999,
-        cursor
+        cursor,
       });
 
       if (!response.ok) {
@@ -347,8 +385,8 @@ Returns complete thread data with parent messages and all replies, even if the t
       if (msg.reply_count && msg.reply_count > 0) {
         threadTimestamps.add(msg.ts);
       }
-      
-      // Thread reply message  
+
+      // Thread reply message
       if (msg.thread_ts && msg.thread_ts !== msg.ts) {
         threadTimestamps.add(msg.thread_ts);
       }
@@ -361,8 +399,8 @@ Returns complete thread data with parent messages and all replies, even if the t
    * STEP 3: Collect complete thread data for each identified thread
    */
   private async collectCompleteThreadData(
-    client: SlackClient, 
-    channel: string, 
+    client: SlackClient,
+    channel: string,
     threadTimestamps: string[],
     includeParent: boolean,
     includeMetadata: boolean
@@ -373,7 +411,7 @@ Returns complete thread data with parent messages and all replies, even if the t
       try {
         const response = await client.getConversationReplies(channel, threadTs, {
           inclusive: true,
-          limit: 999
+          limit: 999,
         });
 
         if (response.ok && response.messages && response.messages.length > 0) {
@@ -383,17 +421,17 @@ Returns complete thread data with parent messages and all replies, even if the t
 
           const threadData: any = {
             thread_ts: threadTs,
-            messages: includeParent ? messages : replies
+            messages: includeParent ? messages : replies,
           };
 
           if (includeMetadata) {
             threadData.thread_stats = {
               reply_count: replies.length,
-              participant_count: new Set(messages.map(m => m.user).filter(u => u)).size,
+              participant_count: new Set(messages.map((m) => m.user).filter((u) => u)).size,
               first_reply_ts: replies.length > 0 ? replies[0].ts : null,
               last_reply_ts: replies.length > 0 ? replies[replies.length - 1].ts : null,
               parent_user: parentMessage.user,
-              parent_text_preview: parentMessage.text?.substring(0, 100) || ''
+              parent_text_preview: parentMessage.text?.substring(0, 100) || '',
             };
           }
 

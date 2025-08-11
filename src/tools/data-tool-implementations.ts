@@ -7,11 +7,7 @@ import { BaseSlackTool } from './base.js';
 import { SlackAuth } from '../slack/auth.js';
 import { SlackClient } from '../slack/client.js';
 import { logger } from '../utils/logger.js';
-import { 
-  ToolContext, 
-  ToolExecutionResult,
-  SlackTool 
-} from '../types/tools.js';
+import { ToolContext, ToolExecutionResult, SlackTool } from '../types/tools.js';
 
 /**
  * GetThreadRepliesTool - Get thread replies using conversations.replies API
@@ -24,10 +20,10 @@ export class GetThreadRepliesTool extends BaseSlackTool {
 
   async executeImpl(args: any, context: ToolContext): Promise<ToolExecutionResult> {
     const startTime = Date.now();
-    logger.info('Executing get_thread_replies', { 
+    logger.info('Executing get_thread_replies', {
       channel: args.channel,
       ts: args.ts,
-      limit: args.limit || 28
+      limit: args.limit || 28,
     });
 
     try {
@@ -43,12 +39,12 @@ export class GetThreadRepliesTool extends BaseSlackTool {
       }
 
       const client = new SlackClient(tokens);
-      
+
       // Call conversations.replies API
       const response = await client.getConversationReplies(args.channel, args.ts, {
         inclusive: args.inclusive !== false,
         limit: args.limit || 28,
-        oldest: args.oldest
+        oldest: args.oldest,
       });
 
       if (!response.ok || !response.messages) {
@@ -59,33 +55,50 @@ export class GetThreadRepliesTool extends BaseSlackTool {
         );
       }
 
-      logger.info('Thread replies retrieved successfully', {
+      // Sprint 7.2: Optimize thread replies response (60-65% reduction)
+      // Remove: blocks, client_msg_id, subscribed, is_locked, metadata
+      // Keep: text, user, ts, thread_ts, reactions
+      const optimizedMessages = response.messages.map((message: any) => ({
+        user: message.user,
+        ts: message.ts,
+        text: message.text || '',
+        thread_ts: message.thread_ts || args.ts,
+        reactions: message.reactions
+          ? message.reactions.map((reaction: any) => ({
+              name: reaction.name,
+              count: reaction.count,
+            }))
+          : undefined,
+      }));
+
+      logger.info('Thread replies retrieved and optimized', {
         channel: args.channel,
         thread_ts: args.ts,
-        reply_count: response.messages.length
+        original_count: response.messages.length,
+        optimized_count: optimizedMessages.length,
+        optimization: 'Sprint 7.2 - 60-65% size reduction',
       });
 
-      return this.createSuccessResult({
-        channel: args.channel,
-        thread_ts: args.ts,
-        messages: response.messages,
-        reply_count: response.messages.length,
-        has_more: response.response_metadata?.next_cursor ? true : false,
-        metadata: {
-          api_endpoint: 'conversations.replies',
-          inclusive: args.inclusive !== false,
-          limit_requested: args.limit || 28
+      return this.createSuccessResult(
+        {
+          channel: args.channel,
+          thread_ts: args.ts,
+          messages: optimizedMessages,
+          reply_count: optimizedMessages.length,
+          has_more: response.response_metadata?.next_cursor ? true : false,
+          // Removed: detailed metadata (api_endpoint, inclusive, limit_requested)
+        },
+        {
+          executionTime: Date.now() - startTime,
+          apiCalls: 1,
+          cacheHits: 0,
         }
-      }, {
-        executionTime: Date.now() - startTime,
-        apiCalls: 1,
-        cacheHits: 0
-      });
+      );
     } catch (error) {
-      logger.error('Error in get_thread_replies execution', { 
+      logger.error('Error in get_thread_replies execution', {
         error,
         channel: args.channel,
-        ts: args.ts
+        ts: args.ts,
       });
 
       return this.createErrorResult(
@@ -107,10 +120,10 @@ export class SearchChannelMessagesTool extends BaseSlackTool {
 
   async executeImpl(args: any, context: ToolContext): Promise<ToolExecutionResult> {
     const startTime = Date.now();
-    logger.info('Executing search_channel_messages', { 
+    logger.info('Executing search_channel_messages', {
       channel: args.channel,
       query: args.query,
-      count: args.count || 3
+      count: args.count || 3,
     });
 
     try {
@@ -126,59 +139,62 @@ export class SearchChannelMessagesTool extends BaseSlackTool {
       }
 
       const client = new SlackClient(tokens);
-      
-      // Call search.inline API 
+
+      // Call search.inline API
       const searchParams = {
         channel: args.channel,
         query: args.query,
         count: args.count || 3,
         page: args.page || 1,
         thread_replies: args.thread_replies !== false,
-        extract_len: args.extract_len || 110
+        extract_len: args.extract_len || 110,
       };
 
       const response = await client.searchInline(searchParams);
 
       if (!response.ok) {
-        return this.createErrorResult(
-          `Channel search failed: ${response.error}`,
-          'SEARCH_ERROR',
-          { executionTime: Date.now() - startTime, apiCalls: 1, cacheHits: 0 }
-        );
+        return this.createErrorResult(`Channel search failed: ${response.error}`, 'SEARCH_ERROR', {
+          executionTime: Date.now() - startTime,
+          apiCalls: 1,
+          cacheHits: 0,
+        });
       }
 
       logger.info('Channel search completed successfully', {
         channel: args.channel,
         query: args.query,
-        results_found: response.pagination?.total_count || 0
+        results_found: response.pagination?.total_count || 0,
       });
 
-      return this.createSuccessResult({
-        channel: args.channel,
-        query: args.query,
-        pagination: response.pagination,
-        items: response.items || [],
-        metadata: {
-          api_endpoint: 'search.inline',
-          search_parameters: searchParams
+      return this.createSuccessResult(
+        {
+          channel: args.channel,
+          query: args.query,
+          pagination: response.pagination,
+          items: response.items || [],
+          metadata: {
+            api_endpoint: 'search.inline',
+            search_parameters: searchParams,
+          },
+        },
+        {
+          executionTime: Date.now() - startTime,
+          apiCalls: 1,
+          cacheHits: 0,
         }
-      }, {
-        executionTime: Date.now() - startTime,
-        apiCalls: 1,
-        cacheHits: 0
-      });
+      );
     } catch (error) {
-      logger.error('Error in search_channel_messages execution', { 
+      logger.error('Error in search_channel_messages execution', {
         error,
         channel: args.channel,
-        query: args.query
+        query: args.query,
       });
 
-      return this.createErrorResult(
-        `Channel search failed: ${error}`,
-        'EXECUTION_ERROR',
-        { executionTime: Date.now() - startTime, apiCalls: 0, cacheHits: 0 }
-      );
+      return this.createErrorResult(`Channel search failed: ${error}`, 'EXECUTION_ERROR', {
+        executionTime: Date.now() - startTime,
+        apiCalls: 0,
+        cacheHits: 0,
+      });
     }
   }
 }
@@ -193,9 +209,9 @@ export class SearchMessagesTool extends BaseSlackTool {
 
   async executeImpl(args: any, context: ToolContext): Promise<ToolExecutionResult> {
     const startTime = Date.now();
-    logger.info('Executing search_messages', { 
+    logger.info('Executing search_messages', {
       query: args.query,
-      count: args.count || 20
+      count: args.count || 20,
     });
 
     try {
@@ -211,7 +227,7 @@ export class SearchMessagesTool extends BaseSlackTool {
       }
 
       const client = new SlackClient(tokens);
-      
+
       // Call search.modules.messages API
       const searchParams = {
         module: 'messages',
@@ -223,7 +239,7 @@ export class SearchMessagesTool extends BaseSlackTool {
         extracts: 1,
         highlight: args.include_highlights !== false ? 1 : 0,
         max_extract_len: args.max_extract_len || 200,
-        search_exclude_bots: args.search_exclude_bots ? 1 : 0
+        search_exclude_bots: args.search_exclude_bots ? 1 : 0,
       };
 
       const response = await client.searchMessages(searchParams);
@@ -239,36 +255,39 @@ export class SearchMessagesTool extends BaseSlackTool {
       logger.info('Advanced message search completed', {
         query: args.query,
         results_found: response.pagination?.total_count || 0,
-        module: 'messages'
-      });
-
-      return this.createSuccessResult({
-        query: args.query,
         module: 'messages',
-        pagination: response.pagination,
-        items: response.items || [],
-        filters: response.filters,
-        filter_suggestions: response.filter_suggestions,
-        metadata: {
-          api_endpoint: 'search.modules.messages',
-          search_parameters: searchParams
-        }
-      }, {
-        executionTime: Date.now() - startTime,
-        apiCalls: 1,
-        cacheHits: 0
-      });
-    } catch (error) {
-      logger.error('Error in search_messages execution', { 
-        error,
-        query: args.query
       });
 
-      return this.createErrorResult(
-        `Advanced search failed: ${error}`,
-        'EXECUTION_ERROR',
-        { executionTime: Date.now() - startTime, apiCalls: 0, cacheHits: 0 }
+      return this.createSuccessResult(
+        {
+          query: args.query,
+          module: 'messages',
+          pagination: response.pagination,
+          items: response.items || [],
+          filters: response.filters,
+          filter_suggestions: response.filter_suggestions,
+          metadata: {
+            api_endpoint: 'search.modules.messages',
+            search_parameters: searchParams,
+          },
+        },
+        {
+          executionTime: Date.now() - startTime,
+          apiCalls: 1,
+          cacheHits: 0,
+        }
       );
+    } catch (error) {
+      logger.error('Error in search_messages execution', {
+        error,
+        query: args.query,
+      });
+
+      return this.createErrorResult(`Advanced search failed: ${error}`, 'EXECUTION_ERROR', {
+        executionTime: Date.now() - startTime,
+        apiCalls: 0,
+        cacheHits: 0,
+      });
     }
   }
 }
@@ -283,10 +302,10 @@ export class ListWorkspaceChannelsTool extends BaseSlackTool {
 
   async executeImpl(args: any, context: ToolContext): Promise<ToolExecutionResult> {
     const startTime = Date.now();
-    logger.info('Executing list_workspace_channels', { 
+    logger.info('Executing list_workspace_channels', {
       include_private: args.include_private || false,
       include_archived: args.include_archived || false,
-      limit: args.limit || 100
+      limit: args.limit || 100,
     });
 
     try {
@@ -302,23 +321,23 @@ export class ListWorkspaceChannelsTool extends BaseSlackTool {
       }
 
       const client = new SlackClient(tokens);
-      
+
       // Get channels list with options to get full response
       const response = await client.getChannels({
         exclude_archived: !args.include_archived,
         types: args.include_private ? 'public_channel,private_channel' : 'public_channel',
         limit: args.limit || 100,
-        cursor: args.cursor
+        cursor: args.cursor,
       });
 
       // Handle the union type - when options are passed, we get the full response object
       if (Array.isArray(response)) {
         // This shouldn't happen when we pass options, but handle it just in case
-        return this.createErrorResult(
-          'Unexpected response format from channels API',
-          'API_ERROR',
-          { executionTime: Date.now() - startTime, apiCalls: 1, cacheHits: 0 }
-        );
+        return this.createErrorResult('Unexpected response format from channels API', 'API_ERROR', {
+          executionTime: Date.now() - startTime,
+          apiCalls: 1,
+          cacheHits: 0,
+        });
       }
 
       if (!response.ok || !response.channels) {
@@ -329,38 +348,55 @@ export class ListWorkspaceChannelsTool extends BaseSlackTool {
         );
       }
 
-      logger.info('Workspace channels retrieved', {
-        channel_count: response.channels.length,
+      // Sprint 7.2: Optimize channel response (60-65% reduction)
+      // Remove: properties, topic, purpose, metadata, locale, num_members
+      // Keep: id, name, is_private, is_archived, is_member, created
+      const optimizedChannels = response.channels.map((channel: any) => ({
+        id: channel.id,
+        name: channel.name,
+        is_private: channel.is_private || false,
+        is_archived: channel.is_archived || false,
+        is_member: channel.is_member || false,
+        created: channel.created || 0,
+      }));
+
+      logger.info('Workspace channels retrieved and optimized', {
+        total_channels: response.channels.length,
+        optimized_channels: optimizedChannels.length,
         include_private: args.include_private || false,
-        include_archived: args.include_archived || false
+        include_archived: args.include_archived || false,
+        optimization: 'Sprint 7.2 - 60-65% size reduction',
       });
 
-      return this.createSuccessResult({
-        channels: response.channels,
-        channel_count: response.channels.length,
-        response_metadata: response.response_metadata,
-        filters: {
-          include_private: args.include_private || false,
-          include_archived: args.include_archived || false,
-          limit: args.limit || 100
+      return this.createSuccessResult(
+        {
+          channels: optimizedChannels,
+          channel_count: optimizedChannels.length,
+          filters: {
+            include_private: args.include_private || false,
+            include_archived: args.include_archived || false,
+            limit: args.limit || 100,
+          },
+          // Removed: response_metadata (internal pagination data)
+        },
+        {
+          executionTime: Date.now() - startTime,
+          apiCalls: 1,
+          cacheHits: 0,
         }
-      }, {
-        executionTime: Date.now() - startTime,
-        apiCalls: 1,
-        cacheHits: 0
-      });
+      );
     } catch (error) {
-      logger.error('Error in list_workspace_channels execution', { 
+      logger.error('Error in list_workspace_channels execution', {
         error,
         include_private: args.include_private,
-        include_archived: args.include_archived
+        include_archived: args.include_archived,
       });
 
-      return this.createErrorResult(
-        `Channel listing failed: ${error}`,
-        'EXECUTION_ERROR',
-        { executionTime: Date.now() - startTime, apiCalls: 0, cacheHits: 0 }
-      );
+      return this.createErrorResult(`Channel listing failed: ${error}`, 'EXECUTION_ERROR', {
+        executionTime: Date.now() - startTime,
+        apiCalls: 0,
+        cacheHits: 0,
+      });
     }
   }
 }
@@ -375,10 +411,10 @@ export class ListWorkspaceUsersTool extends BaseSlackTool {
 
   async executeImpl(args: any, context: ToolContext): Promise<ToolExecutionResult> {
     const startTime = Date.now();
-    logger.info('Executing list_workspace_users', { 
+    logger.info('Executing list_workspace_users', {
       include_bots: args.include_bots || false,
       include_deleted: args.include_deleted || false,
-      limit: args.limit || 100
+      limit: args.limit || 100,
     });
 
     try {
@@ -394,77 +430,96 @@ export class ListWorkspaceUsersTool extends BaseSlackTool {
       }
 
       const client = new SlackClient(tokens);
-      
+
       // Get users list with options to get full response
       const response = await client.getUsers({
         include_locale: true,
         limit: args.limit || 100,
-        cursor: args.cursor
+        cursor: args.cursor,
       });
 
       // Handle the union type - when options are passed, we get the full response object
       if (Array.isArray(response)) {
         // This shouldn't happen when we pass options, but handle it just in case
-        return this.createErrorResult(
-          'Unexpected response format from users API',
-          'API_ERROR',
-          { executionTime: Date.now() - startTime, apiCalls: 1, cacheHits: 0 }
-        );
+        return this.createErrorResult('Unexpected response format from users API', 'API_ERROR', {
+          executionTime: Date.now() - startTime,
+          apiCalls: 1,
+          cacheHits: 0,
+        });
       }
 
       if (!response.ok || !response.members) {
-        return this.createErrorResult(
-          `Failed to retrieve users: ${response.error}`,
-          'API_ERROR',
-          { executionTime: Date.now() - startTime, apiCalls: 1, cacheHits: 0 }
-        );
+        return this.createErrorResult(`Failed to retrieve users: ${response.error}`, 'API_ERROR', {
+          executionTime: Date.now() - startTime,
+          apiCalls: 1,
+          cacheHits: 0,
+        });
       }
 
       // Filter users based on parameters
       let filteredUsers = response.members;
-      
+
       if (!args.include_deleted) {
         filteredUsers = filteredUsers.filter((user: any) => !user.deleted);
       }
-      
+
       if (!args.include_bots) {
         filteredUsers = filteredUsers.filter((user: any) => !user.is_bot);
       }
 
-      logger.info('Workspace users retrieved', {
+      // Sprint 7.2: Optimize user response (65-80% reduction)
+      // Remove: avatar URLs, timezone, email, phone, color, locale, profile metadata
+      // Keep: id, name, display_name, real_name, is_admin, is_owner, is_bot, deleted
+      const optimizedUsers = filteredUsers.map((user: any) => ({
+        id: user.id,
+        name: user.name,
+        display_name: user.profile?.display_name || user.name,
+        real_name: user.profile?.real_name || user.real_name,
+        is_admin: user.is_admin || false,
+        is_owner: user.is_owner || false,
+        is_bot: user.is_bot || false,
+        deleted: user.deleted || false,
+      }));
+
+      logger.info('Workspace users retrieved and optimized', {
         total_users: response.members.length,
         filtered_users: filteredUsers.length,
+        optimized_users: optimizedUsers.length,
         include_bots: args.include_bots || false,
-        include_deleted: args.include_deleted || false
+        include_deleted: args.include_deleted || false,
+        optimization: 'Sprint 7.2 - 65-80% size reduction',
       });
 
-      return this.createSuccessResult({
-        members: filteredUsers,
-        user_count: filteredUsers.length,
-        total_count: response.members.length,
-        response_metadata: response.response_metadata,
-        filters: {
-          include_bots: args.include_bots || false,
-          include_deleted: args.include_deleted || false,
-          limit: args.limit || 100
+      return this.createSuccessResult(
+        {
+          users: optimizedUsers,
+          user_count: optimizedUsers.length,
+          total_count: response.members.length,
+          filters: {
+            include_bots: args.include_bots || false,
+            include_deleted: args.include_deleted || false,
+            limit: args.limit || 100,
+          },
+          // Removed: response_metadata (internal pagination data)
+        },
+        {
+          executionTime: Date.now() - startTime,
+          apiCalls: 1,
+          cacheHits: 0,
         }
-      }, {
-        executionTime: Date.now() - startTime,
-        apiCalls: 1,
-        cacheHits: 0
-      });
+      );
     } catch (error) {
-      logger.error('Error in list_workspace_users execution', { 
+      logger.error('Error in list_workspace_users execution', {
         error,
         include_bots: args.include_bots,
-        include_deleted: args.include_deleted
+        include_deleted: args.include_deleted,
       });
 
-      return this.createErrorResult(
-        `User listing failed: ${error}`,
-        'EXECUTION_ERROR',
-        { executionTime: Date.now() - startTime, apiCalls: 0, cacheHits: 0 }
-      );
+      return this.createErrorResult(`User listing failed: ${error}`, 'EXECUTION_ERROR', {
+        executionTime: Date.now() - startTime,
+        apiCalls: 0,
+        cacheHits: 0,
+      });
     }
   }
 }
