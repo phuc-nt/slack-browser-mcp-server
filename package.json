@@ -1,7 +1,7 @@
 {
   "name": "slack-browser-mcp-server",
-  "version": "1.1.0",
-  "description": "Production-ready MCP server: 11 optimized Slack tools for AI assistants - 60% faster, 91% success rate",
+  "version": "1.2.0",
+  "description": "Enterprise MCP server: 12 production tools with Block Kit + 50+ search patterns - AI-optimized for information synthesis",
   "main": "dist/index.js",
   "bin": {
     "slack-browser-mcp-server": "dist/index.js"
@@ -33,7 +33,11 @@
     "server",
     "model-context-protocol",
     "browser-token",
-    "stealth-auth"
+    "stealth-auth",
+    "block-kit",
+    "search-patterns",
+    "information-synthesis",
+    "enterprise"
   ],
   "author": "phuc-nt",
   "license": "MIT",

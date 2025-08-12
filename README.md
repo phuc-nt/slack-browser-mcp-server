@@ -17,13 +17,13 @@
 
 - **Interactive Messaging** (6): post_message, update_message, delete_message, react_to_message, **post_message_blocks**, **update_message_blocks**
 - **Data Retrieval** (4): get_thread_replies, list_workspace_channels, list_workspace_users, get_user_profile
-- **Advanced Search** (2): search_messages, search_files (with custom query support for flexible thread collection)
+- **Advanced Search** (2): search_messages (50+ query patterns + AI workflows), search_files (with custom query support for flexible thread collection)
 
 ### 🎯 **Key Capabilities:**
 
 - ✅ **Block Kit Interactive Messaging** - Rich content with buttons, forms, dashboards, and workflows
 - ✅ **Browser Token Auth** - Stealth authentication (no app required)
-- ✅ **Advanced Search** - Query operators, file search, flexible thread collection with custom queries
+- ✅ **Advanced Search** - 50+ comprehensive query patterns, AI-optimized synthesis workflows, flexible thread collection
 - ✅ **AI Client Tested** - Confirmed working with real AI assistants like Claude
 - ✅ **Optimized Performance** - 60-70% response size reduction for AI efficiency
 - ✅ **Production Ready** - 89% success rate with comprehensive validation
@@ -90,22 +90,23 @@ AI Assistant: I'll create a Block Kit message with interactive buttons using pos
 [Creates interactive message with buttons, status indicators, and rich formatting]
 ```
 
-**Advanced Search with Custom Queries:**
+**Advanced Search with 50+ Query Patterns:**
 
 ```
-Human: Find all messages about "deployment" in #general from last week
+Human: Find all deployment discussions with issues in engineering channels from last week
 
-AI Assistant: I'll use search_messages with custom query operators.
-[Uses: "in:general after:2025-08-05 deployment" - returns relevant discussions]
+AI Assistant: I'll use search_messages with comprehensive query patterns.
+[Uses: "(deployment AND (error OR issue OR problem)) in:engineering has:thread after:last week"]
 ```
 
-**Thread Collection via Search:**
+**AI-Optimized Information Synthesis:**
 
 ```
-Human: Get all conversations about the incident from yesterday
+Human: Analyze all decision discussions in leadership channels and extract outcomes
 
-AI Assistant: I'll search for incident-related threads using custom queries.
-[Uses: "after:2025-08-11 (incident OR outage OR down)" - returns complete conversations]
+AI Assistant: I'll use integrated search + thread analysis workflow.
+[Uses: '"decision" OR "approved" OR "resolved" in:leadership has:thread during:last month'
+→ get_thread_replies for complete context → comprehensive decision analysis]
 ```
 
 **Dynamic Status Updates:**
@@ -142,6 +143,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 - **[Installation Guide](INSTALL.md)** - Complete setup instructions
 - **[Block Kit Documentation](docs/00_context/block-kit/)** - Interactive messaging guides
+- **[Search Integration Workflows](docs/00_context/search-integration-workflows.md)** - AI optimization patterns
 - **[Project Status](docs/START_POINT.md)** - Current implementation status
 - **[Implementation History](docs/02_implementation/)** - Complete development timeline
 
