@@ -10,7 +10,7 @@ import {
   ListWorkspaceUsersTool,
 } from './data-tool-implementations.js';
 import { SearchMessagesTool, SearchFilesTool } from './enhanced-search-tools.js';
-import { CollectThreadsByTimeRangeTool } from './time-range-thread-collection.js';
+
 import { ReactToMessageTool } from './reactions.js';
 import { GetUserProfileTool } from './user-profile.js';
 import { DataTools } from './data-tools.js';
@@ -22,7 +22,7 @@ import { DataTools } from './data-tools.js';
  * - 6 Messaging tools (4 basic + 2 Block Kit)
  * - 4 Data retrieval tools
  * - 2 Enhanced search tools
- * - 1 Thread collection tool (enhanced time-range with keyword support)
+ * Thread collection removed - users can use search_messages with custom queries
  *
  * Sprint 7.4: Added Block Kit messaging tools for interactive content.
  */
@@ -73,12 +73,8 @@ export class ProductionToolFactory {
         tools: ['search_messages', 'search_files'],
       });
 
-      // Thread Collection Tools (1) - Sprint 7.3 Enhanced with keyword support
-      this.registerTool(new CollectThreadsByTimeRangeTool());
-
-      logger.info('Registered thread collection tools', {
-        tools: ['collect_threads_by_timerange'],
-      });
+      // Thread Collection Tools removed - users can use search_messages with custom queries
+      // for similar functionality with more flexibility
 
       // System Tools removed in Sprint 7.2 for streamlined architecture
 
@@ -127,14 +123,13 @@ export class ProductionToolFactory {
         messaging: 6,
         data: 4,
         search: 2,
-        collection: 1,
       },
       toolNames: Array.from(this.toolInstances.keys()).sort(),
     };
   }
 
   /**
-   * Validate that exactly 12 tools are registered (Sprint 7.4 - Block Kit tools, consolidated keyword support)
+   * Validate that exactly 12 tools are registered (Sprint 7.4 - Block Kit tools, thread collection removed)
    */
   validateConfiguration(): boolean {
     const expectedTools = [
@@ -153,8 +148,7 @@ export class ProductionToolFactory {
       // Enhanced Search (2) - Phase 6
       'search_messages',
       'search_files',
-      // Thread Collection (1) - Sprint 7.3 Enhanced with keyword support
-      'collect_threads_by_timerange',
+      // Thread Collection removed - users can use search_messages with custom queries
     ];
 
     const actualTools = Array.from(this.toolInstances.keys()).sort();

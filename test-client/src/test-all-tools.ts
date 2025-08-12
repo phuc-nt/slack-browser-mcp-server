@@ -62,11 +62,11 @@ class ComprehensiveToolTestSuite {
     try {
       await this.setupMCPConnection();
 
-      // Test all tool categories - Sprint 7.4: 12 tools (Block Kit tools, consolidated keyword support)
+      // Test all tool categories - Sprint 7.4: 12 tools (Block Kit tools, thread collection removed)
       await this.testBasicTools();
       await this.testDataRetrievalTools();
       await this.testSearchTools();
-      await this.testThreadCollectionTools();
+
       await this.testMessagingTools();
       await this.testBlockKitTools();
       // System tools removed in Sprint 7.2 optimization
@@ -101,7 +101,7 @@ class ComprehensiveToolTestSuite {
       await this.testPostMessage();
       await this.testReactToMessage();
       await this.testSearchMessages();
-      await this.testCollectThreads();
+
 
       await this.testGetThreadReplies();
       await this.testPostMessageBlocks();
@@ -339,208 +339,7 @@ class ComprehensiveToolTestSuite {
     );
   }
 
-  private async testThreadCollectionTools(): Promise<void> {
-    console.log('🧵 Testing Thread Collection Tools (Sprint 7.3)...');
 
-    // Get current timestamp for time range testing
-    const currentTime = new Date();
-    const oneDayAgo = new Date(currentTime.getTime() - 24 * 60 * 60 * 1000);
-    const twoDaysAgo = new Date(currentTime.getTime() - 48 * 60 * 60 * 1000);
-
-    // Test collect_threads_by_timerange with 24-hour range
-    await this.testTool(
-      'collect_threads_by_timerange',
-      {
-        channel: this.testConfig.channels.public.id,
-        start_date: oneDayAgo.toISOString(),
-        end_date: currentTime.toISOString(),
-        include_parent: true,
-        include_metadata: true,
-        max_threads: 10,
-      },
-      'Collect threads from last 24 hours with metadata',
-      {
-        expectedResponseType: 'json',
-        expectSuccess: true,
-        expectedFields: ['channel', 'time_range', 'collection_summary', 'threads', 'metadata'],
-      }
-    );
-
-    // Test collect_threads_by_timerange with Unix timestamp format
-    const startTimestamp = Math.floor(twoDaysAgo.getTime() / 1000) + '.000000';
-    const endTimestamp = Math.floor(oneDayAgo.getTime() / 1000) + '.000000';
-
-    await this.testTool(
-      'collect_threads_by_timerange',
-      {
-        channel: this.testConfig.channels.public.id,
-        start_date: startTimestamp,
-        end_date: endTimestamp,
-        include_parent: false,
-        max_threads: 5,
-      },
-      'Collect threads with Unix timestamps (replies only)',
-      {
-        expectedResponseType: 'json',
-        expectSuccess: true,
-        expectedFields: ['collection_summary', 'threads'],
-      }
-    );
-
-    // Test collect_threads_by_timerange with minimal time range (likely no results)
-    const oneHourAgo = new Date(currentTime.getTime() - 60 * 60 * 1000);
-
-    await this.testTool(
-      'collect_threads_by_timerange',
-      {
-        channel: this.testConfig.channels.public.id,
-        start_date: oneHourAgo.toISOString(),
-        end_date: currentTime.toISOString(),
-        max_threads: 3,
-      },
-      'Collect threads from last hour (may return no results)',
-      {
-        expectedResponseType: 'json',
-        expectSuccess: true,
-        expectedFields: ['collection_summary', 'threads'],
-      }
-    );
-
-    // Test collect_threads_by_timerange with keyword filtering (Sprint 7.3)
-    await this.testTool(
-      'collect_threads_by_timerange',
-      {
-        channel: this.testConfig.channels.public.id,
-        start_date: twoDaysAgo.toISOString(),
-        end_date: currentTime.toISOString(),
-        keywords: ['test', 'message'],
-        match_type: 'any',
-        max_threads: 5,
-      },
-      'Collect threads with keyword filtering (any match)',
-      {
-        expectedResponseType: 'json',
-        expectSuccess: true,
-        expectedFields: ['collection_summary', 'threads'],
-        customValidation: (result) => {
-          // Verify keyword filtering metadata is present
-          if (result.collection_summary?.keywords_applied?.length > 0) {
-            console.log(`   ✅ Keywords applied: ${result.collection_summary.keywords_applied.join(', ')}`);
-            return { valid: true };
-          }
-          return { valid: true, warning: 'No keywords applied in response' };
-        }
-      }
-    );
-
-    console.log('🔍 Testing Enhanced Thread Collection with Keywords (Sprint 7.3)...');
-
-    // Test collect_threads_by_timerange with keyword filtering - basic functionality
-    await this.testTool(
-      'collect_threads_by_timerange',
-      {
-        channel: this.testConfig.channels.public.id,
-        keywords: ['test'],
-        start_date: twoDaysAgo.toISOString(),
-        end_date: currentTime.toISOString(),
-        max_threads: 10,
-      },
-      'Time-range collection with "test" keyword filter',
-      {
-        expectedResponseType: 'json',
-        expectSuccess: true,
-        expectedFields: ['channel', 'time_range', 'collection_summary', 'threads'],
-        customValidation: (result) => {
-          // Verify keyword filtering is applied
-          if (result.collection_summary && result.collection_summary.keywords_applied) {
-            console.log(`   ✅ Keywords applied: ${result.collection_summary.keywords_applied}`);
-            return { valid: true };
-          }
-          return { valid: true, warning: 'No keyword filtering detected in response' };
-        }
-      }
-    );
-
-    // Test collect_threads_by_timerange with multiple keywords (ANY match)
-    await this.testTool(
-      'collect_threads_by_timerange',
-      {
-        channel: this.testConfig.channels.public.id,
-        keywords: ['test', 'message', 'tool'],
-        match_type: 'any',
-        start_date: twoDaysAgo.toISOString(),
-        end_date: currentTime.toISOString(),
-        max_threads: 5,
-      },
-      'Time-range collection with multiple keywords (any match)',
-      {
-        expectedResponseType: 'json',
-        expectSuccess: true,
-        expectedFields: ['collection_summary'],
-        customValidation: (result) => {
-          // Verify keyword filtering is applied
-          if (result.collection_summary && result.collection_summary.keywords_applied) {
-            console.log(`   ✅ Multiple keywords applied: ${result.collection_summary.keywords_applied.join(', ')}`);
-            return { valid: true };
-          }
-          return { valid: true, warning: 'Multiple keyword filtering not detected' };
-        }
-      }
-    );
-
-    // Test collect_threads_by_timerange with ALL match type
-    await this.testTool(
-      'collect_threads_by_timerange',
-      {
-        channel: this.testConfig.channels.public.id,
-        keywords: ['test', 'message'],
-        match_type: 'all',
-        start_date: twoDaysAgo.toISOString(),
-        end_date: currentTime.toISOString(),
-        max_threads: 3,
-      },
-      'Time-range collection requiring all keywords',
-      {
-        expectedResponseType: 'json',
-        expectSuccess: true,
-        expectedFields: ['collection_summary'],
-        customValidation: (result) => {
-          // Verify ALL match logic is applied
-          if (result.collection_summary && result.collection_summary.match_type === 'all') {
-            console.log(`   ✅ All-match filtering applied`);
-            return { valid: true };
-          }
-          return { valid: true, warning: 'ALL match logic not properly implemented' };
-        }
-      }
-    );
-
-    // Test collect_threads_by_timerange with specific test case (mcp_test channel)
-    await this.testTool(
-      'collect_threads_by_timerange',
-      {
-        channel: 'C099184U2TU', // Your mcp_test channel
-        keywords: ['test'],
-        start_date: '2025-07-31T00:00:00Z',
-        end_date: '2025-08-09T23:59:59Z',
-        max_threads: 10,
-      },
-      'Time-range collection with keyword filter (mcp_test channel)',
-      {
-        expectedResponseType: 'json',
-        expectSuccess: true,
-        expectedFields: ['collection_summary'],
-        customValidation: (result) => {
-          // Verify the channel-specific filtering with keywords
-          if (result.collection_summary && result.collection_summary.keywords_applied) {
-            console.log(`   ✅ Channel-specific keyword filtering: ${result.collection_summary.keywords_applied}`);
-            return { valid: true };
-          }
-          return { valid: true, warning: 'Channel-specific keyword filtering not detected' };
-        }
-      }
-    );
-  }
 
   private async testMessagingTools(): Promise<void> {
     console.log('💬 Testing Messaging Tools (Dry Run)...');
@@ -949,37 +748,7 @@ class ComprehensiveToolTestSuite {
     );
   }
 
-  private async testCollectThreads(): Promise<void> {
-    console.log('\n🧵 8. Testing Thread Collection');
 
-    // Calculate time range - last 1 hour
-    const endTime = new Date();
-    const startTime = new Date(endTime.getTime() - 1 * 60 * 60 * 1000); // 1 hour ago
-
-    const result = await this.testSequentialTool(
-      'collect_threads_by_timerange',
-      {
-        channel: this.testConfig.channels.public.id,
-        start_date: startTime.toISOString(),
-        end_date: endTime.toISOString(),
-        include_parent: true,
-        include_metadata: true,
-        max_threads: 10,
-      },
-      'Collect recent threads for analysis'
-    );
-
-    // Try to find a thread with replies for next test
-    if (result && result.threads && result.threads.length > 0) {
-      for (const thread of result.threads) {
-        if (thread.reply_count && thread.reply_count > 0) {
-          this.testContext.threadTs = thread.thread_ts;
-          console.log(`   🎯 Found thread with replies: ${this.testContext.threadTs}`);
-          break;
-        }
-      }
-    }
-  }
 
 
 
@@ -1289,7 +1058,7 @@ class ComprehensiveToolTestSuite {
         'get_user_profile',
       ],
       search: ['search_messages', 'search_files'],
-      collection: ['collect_threads_by_timerange'],
+      // collection category removed - thread collection tools removed
       // system category removed - server_info tool removed in Sprint 7.2
     };
 

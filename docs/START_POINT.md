@@ -13,7 +13,7 @@
 
 ### 🛠️ **Current Architecture**
 
-- **Tools**: 14 production tools (includes Block Kit messaging)
+- **Tools**: 12 production tools (includes Block Kit messaging)
 - **Transport**: Stdio only (MCP compliant)
 - **Authentication**: Browser tokens (xoxc/xoxd) - stealth mode
 - **Testing**: Unified test suite với data inheritance
@@ -23,22 +23,22 @@
 - **✅ Sprint 7.1 COMPLETED**: Test suite consolidation (12/12 tools, 100% success)
 - **✅ Sprint 7.2 COMPLETED**: Response optimization (60-70% size reduction, 10/11 tools production-ready)
 - **✅ Sprint 7.3 COMPLETED**: Enhanced thread collection with keyword search (11 → 12 tools)
-- **✅ Sprint 7.4 COMPLETED**: Block Kit messaging support (12 → 14 tools)
+- **✅ Sprint 7.4 COMPLETED**: Block Kit messaging support, thread collection removed (14 → 12 tools)
 
-## 🔧 **Current Tools** (14 total)
+## 🔧 **Current Tools** (12 total)
 
 ### **Production Tools**
 
 - **Messaging** (6): `post_message`, `update_message`, `delete_message`, `react_to_message`, `post_message_blocks`, `update_message_blocks`
-- **Data Retrieval** (3): `get_thread_replies`, `list_workspace_channels`, `list_workspace_users`, `get_user_profile`
+- **Data Retrieval** (4): `get_thread_replies`, `list_workspace_channels`, `list_workspace_users`, `get_user_profile`
 - **Enhanced Search** (2): `search_messages`, `search_files`
-- **Thread Collection** (2): `collect_threads_by_timerange`, `collect_threads_by_keyword`
+- **Thread Collection**: Removed - users can use `search_messages` with custom queries for similar functionality
 
 ### **Test Configuration**
 
 - **Workspace**: `T07UZEWG7A9` (tbvaidatalearning.slack.com)
 - **Test Channel**: `C099184U2TU`
-- **Success Rate**: 79% (11/14 tools) with Block Kit support
+- **Success Rate**: 100% (12/12 tools) with Block Kit support and thread collection removed
 
 ---
 
@@ -46,9 +46,10 @@
 
 ### **Achievement Summary**
 
-**✅ Sprint 7.4 COMPLETED**: Block Kit messaging tools implemented
+**✅ Sprint 7.4 COMPLETED**: Block Kit messaging tools implemented, thread collection removed
 - 2 new Block Kit messaging tools: `post_message_blocks`, `update_message_blocks`  
-- 12 → 14 production tools
+- Thread collection tools removed (users can use `search_messages` with custom queries)
+- Final count: 12 production tools
 - Interactive content support with buttons, sections, dividers
 - Comprehensive Block Kit validation system
 
