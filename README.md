@@ -21,21 +21,9 @@
 
 ### 🎯 **Key Capabilities:**
 
+- ✅ **Browser Token Authentication** - No app installation or admin approval needed
 - ✅ **Block Kit Interactive Messaging** - Rich content with buttons, forms, dashboards, and workflows
-- ✅ **Browser Token Auth** - Stealth authentication (no app required)
 - ✅ **Advanced Search** - 50+ comprehensive query patterns, AI-optimized synthesis workflows, flexible thread collection
-- ✅ **AI Client Tested** - Confirmed working with real AI assistants like Claude
-- ✅ **Optimized Performance** - 60-70% response size reduction for AI efficiency
-- ✅ **Production Ready** - 89% success rate with comprehensive validation
-- ✅ **MCP Protocol Support** - Compatible with Claude Desktop, Cline, Cursor, and other MCP clients
-
-### 🎛️ **Block Kit Support:**
-
-- **Interactive Elements**: Buttons, select menus, date pickers, forms
-- **Rich Content**: Sections with text, images, dividers, headers, context blocks
-- **Workflow Integration**: Approval requests, status dashboards, task management
-- **Real-time Updates**: Dynamic content updates with no "edited" indicators
-- **Comprehensive Validation**: Runtime validation ensures Block Kit compliance
 
 ## 🚀 Quick Start
 
@@ -47,105 +35,55 @@ npm install -g slack-browser-mcp-server
 
 **📖 [Complete Installation Guide](INSTALL.md)** - Follow the step-by-step setup guide
 
-### Quick Overview:
-
-1. **Install Package** - `npm install -g slack-browser-mcp-server` OR clone & build from source
-2. **Get Slack Tokens** - Extract browser tokens (we provide a browser extension!)
-3. **Configure AI Client** - Add MCP server to Claude Desktop, Cline, Cursor, or other MCP client config
-4. **Start Using** - Ask your AI assistant to interact with your Slack workspace with full Block Kit support!
-
-### Quick Configuration
-
-Add to your MCP client config (find your path with `which slack-browser-mcp-server`):
-
-```json
-{
-  "mcpServers": {
-    "phuc-nt/slack-browser-mcp": {
-      "disabled": false,
-      "timeout": 60,
-      "type": "stdio",
-      "command": "node",
-      "args": ["/opt/homebrew/bin/slack-browser-mcp-server"],
-      "env": {
-        "SLACK_XOXC_TOKEN": "xoxc-your-extracted-token-here",
-        "SLACK_XOXD_TOKEN": "your-d-cookie-value-here",
-        "SLACK_TEAM_DOMAIN": "your-workspace-name"
-      }
-    }
-  }
-}
-```
-
-**⚠️ Replace with your actual path from `which slack-browser-mcp-server`**
-
 ## 💡 Usage Examples
 
-**Block Kit Interactive Messaging:**
+**Progress Summary & Block Kit Report:**
 
 ```
-Human: Create an approval request for the deployment with approve/reject buttons
+Human: Summarize the progress from the last 3 days in the "engineering" channel, write a Block Kit report, and send it to "manager"
 
-AI Assistant: I'll create a Block Kit message with interactive buttons using post_message_blocks.
-[Creates interactive message with buttons, status indicators, and rich formatting]
+AI Assistant: I'll help you create a progress summary report. Here's my plan:
+□ Use search_messages to find recent updates in #engineering channel
+□ Use get_thread_replies to get detailed context from important discussions
+□ Use get_user_profile to get manager's user ID
+□ Use post_message_blocks to create and send a structured Block Kit report
 ```
 
-**Advanced Search with 50+ Query Patterns:**
+**Thread Analysis & Response Guidance:**
 
 ```
-Human: Find all deployment discussions with issues in engineering channels from last week
+Human: Summarize thread "1754405258.272689" and tell me how I should respond
 
-AI Assistant: I'll use search_messages with comprehensive query patterns.
-[Uses: "(deployment AND (error OR issue OR problem)) in:engineering has:thread after:last week"]
+AI Assistant: I'll analyze this thread and provide response guidance:
+□ Use get_thread_replies to retrieve all messages in the thread
+□ Review participants, timeline, and key discussion points
+□ Analyze conversation context and sentiment
+□ Provide summary and suggest appropriate response options
 ```
 
-**AI-Optimized Information Synthesis:**
+**Topic Discovery & Information Synthesis:**
 
 ```
-Human: Analyze all decision discussions in leadership channels and extract outcomes
+Human: Find where people are discussing "deployment issues" and provide a comprehensive summary
 
-AI Assistant: I'll use integrated search + thread analysis workflow.
-[Uses: '"decision" OR "approved" OR "resolved" in:leadership has:thread during:last month'
-→ get_thread_replies for complete context → comprehensive decision analysis]
+AI Assistant: I'll search and synthesize deployment discussions across your workspace:
+□ Use search_messages to find "deployment issues" across all channels
+□ Use get_thread_replies to get full context from relevant threads
+□ Use list_workspace_channels to identify which teams are involved
+□ Compile comprehensive summary with key issues, solutions, and participants
 ```
 
-**Dynamic Status Updates:**
+## 🛠️ Tech Stack
 
-```
-Human: Update the deployment status message to show completion
-
-AI Assistant: I'll update the Block Kit message with new status using update_message_blocks.
-[Updates message with new status, progress indicators, and completion timestamp]
-```
-
-## 🔐 Security
-
-- **Browser tokens** - Extracted from Slack web app (stealth mode)
-- **Environment variables** - Never commit tokens to code
-- **Rate limiting** - Built-in API protection
-- **Local operation** - No external services required
-- **Validation system** - Comprehensive Block Kit structure validation
-- **Error handling** - Graceful failure with detailed error messages
-
-## 📊 Production Status
-
-- **✅ 12 Production Tools** - All core functionality implemented and tested
-- **✅ Block Kit Support** - Full interactive messaging capabilities
-- **✅ AI Client Validated** - Confirmed working with real AI assistants
-- **✅ 89% Test Success Rate** - Comprehensive test coverage (16/18 tests passing)
-- **✅ Enterprise Ready** - Optimized performance and security features
+- **TypeScript** - Type-safe development with strict mode
+- **Node.js** - Runtime environment (16.x+)
+- **MCP Protocol** - Model Context Protocol for AI integration
+- **Slack APIs** - Native Slack Web API integration
+- **Block Kit** - Interactive messaging framework
 
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) for details.
-
-## 📚 Documentation
-
-- **[Installation Guide](INSTALL.md)** - Complete setup instructions
-- **[Block Kit Documentation](docs/00_context/block-kit/)** - Interactive messaging guides
-- **[Search Integration Workflows](docs/00_context/search-integration-workflows.md)** - AI optimization patterns
-- **[Project Status](docs/START_POINT.md)** - Current implementation status
-- **[Implementation History](docs/02_implementation/)** - Complete development timeline
 
 ---
 
