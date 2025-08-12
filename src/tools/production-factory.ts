@@ -3,27 +3,28 @@ import { logger } from '../utils/logger.js';
 
 // Import core production tools only
 import { PostMessageTool, UpdateMessageTool, DeleteMessageTool } from './messaging.js';
+import { PostMessageBlocksTool, UpdateMessageBlocksTool } from './block-kit-messaging.js';
 import {
   GetThreadRepliesTool,
   ListWorkspaceChannelsTool,
   ListWorkspaceUsersTool,
 } from './data-tool-implementations.js';
 import { SearchMessagesTool, SearchFilesTool } from './enhanced-search-tools.js';
-import { CollectThreadsByTimeRangeTool } from './time-range-thread-collection.js';
+
 import { ReactToMessageTool } from './reactions.js';
 import { GetUserProfileTool } from './user-profile.js';
 import { DataTools } from './data-tools.js';
 
 /**
- * Production Tool Factory - Sprint 7.2 Response Optimization
+ * Production Tool Factory - Sprint 7.4 Enhancement
  *
- * Registers exactly 11 core production tools (removed server_info):
- * - 4 Messaging tools
+ * Registers 12 core production tools (added Block Kit support):
+ * - 6 Messaging tools (4 basic + 2 Block Kit)
  * - 4 Data retrieval tools
  * - 2 Enhanced search tools
- * - 1 Time-range thread collection tool
+ * Thread collection removed - users can use search_messages with custom queries
  *
- * Sprint 7.2: Removed server_info tool and optimized response payloads by 60-70%.
+ * Sprint 7.4: Added Block Kit messaging tools for interactive content.
  */
 export class ProductionToolFactory {
   private toolInstances: Map<string, BaseSlackTool> = new Map();
@@ -33,18 +34,20 @@ export class ProductionToolFactory {
   }
 
   /**
-   * Register the 11 core production tools (Sprint 7.2)
+   * Register the 12 core production tools (Sprint 7.4)
    */
   private registerProductionTools(): void {
     try {
-      // Messaging Tools (4)
+      // Messaging Tools (6) - Sprint 7.4: Added Block Kit tools
       this.registerTool(new PostMessageTool());
       this.registerTool(new UpdateMessageTool());
       this.registerTool(new DeleteMessageTool());
       this.registerTool(new ReactToMessageTool());
+      this.registerTool(new PostMessageBlocksTool());
+      this.registerTool(new UpdateMessageBlocksTool());
 
       logger.info('Registered messaging tools', {
-        tools: ['post_message', 'update_message', 'delete_message', 'react_to_message'],
+        tools: ['post_message', 'update_message', 'delete_message', 'react_to_message', 'post_message_blocks', 'update_message_blocks'],
       });
 
       // Data Retrieval Tools (4) - Sprint 7.2
@@ -70,18 +73,14 @@ export class ProductionToolFactory {
         tools: ['search_messages', 'search_files'],
       });
 
-      // Time-Range Thread Collection Tool (1) - Phase 6.2
-      this.registerTool(new CollectThreadsByTimeRangeTool());
-
-      logger.info('Registered time-range thread collection tool', {
-        tools: ['collect_threads_by_timerange'],
-      });
+      // Thread Collection Tools removed - users can use search_messages with custom queries
+      // for similar functionality with more flexibility
 
       // System Tools removed in Sprint 7.2 for streamlined architecture
 
       logger.info('Production tool factory initialized', {
         totalTools: this.toolInstances.size,
-        architecture: 'Sprint 7.2 - Response Optimization',
+        architecture: 'Sprint 7.4 - Block Kit Enhancement',
         tools: Array.from(this.toolInstances.keys()).sort(),
       });
     } catch (error) {
@@ -121,26 +120,26 @@ export class ProductionToolFactory {
     return {
       instances: this.toolInstances.size,
       categories: {
-        messaging: 4,
-        data: 3,
+        messaging: 6,
+        data: 4,
         search: 2,
-        collection: 1,
-        system: 1,
       },
       toolNames: Array.from(this.toolInstances.keys()).sort(),
     };
   }
 
   /**
-   * Validate that exactly 11 tools are registered (Sprint 7.2 - removed server_info)
+   * Validate that exactly 12 tools are registered (Sprint 7.4 - Block Kit tools, thread collection removed)
    */
   validateConfiguration(): boolean {
     const expectedTools = [
-      // Messaging (4)
+      // Messaging (6) - Sprint 7.4: Added Block Kit tools
       'post_message',
       'update_message',
       'delete_message',
       'react_to_message',
+      'post_message_blocks',
+      'update_message_blocks',
       // Data (4) - Phase 6.3
       'get_thread_replies',
       'list_workspace_channels',
@@ -149,8 +148,7 @@ export class ProductionToolFactory {
       // Enhanced Search (2) - Phase 6
       'search_messages',
       'search_files',
-      // Time-Range Thread Collection (1) - Phase 6.2
-      'collect_threads_by_timerange',
+      // Thread Collection removed - users can use search_messages with custom queries
     ];
 
     const actualTools = Array.from(this.toolInstances.keys()).sort();

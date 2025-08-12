@@ -170,14 +170,16 @@ class ConnectionTestSuite {
       });
       console.log('');
 
-      // Verify expected tools are present - Sprint 7.2: 11 tools (removed server_info)
+      // Verify expected tools are present - Sprint 7.4: 12 tools (Block Kit added, thread collection removed)
       const toolNames = tools.tools.map((t) => t.name);
       const expectedTools = [
-        // Messaging (4)
+        // Messaging (6) - includes Block Kit tools
         'post_message',
         'update_message',
         'delete_message',
         'react_to_message',
+        'post_message_blocks',
+        'update_message_blocks',
         // Data (4) - Phase 6.3
         'get_thread_replies',
         'list_workspace_channels',
@@ -186,8 +188,7 @@ class ConnectionTestSuite {
         // Enhanced Search (2)
         'search_messages',
         'search_files',
-        // Time-Range Thread Collection (1) - Phase 6.2
-        'collect_threads_by_timerange',
+        // Thread Collection removed - users can use search_messages with custom queries
       ];
 
       const missingTools = expectedTools.filter((tool) => !toolNames.includes(tool));
@@ -236,7 +237,7 @@ class ConnectionTestSuite {
 
       const tools = await this.client.listTools();
       const toolsByExpectedCategory = {
-        messaging: ['post_message', 'update_message', 'delete_message', 'react_to_message'],
+        messaging: ['post_message', 'update_message', 'delete_message', 'react_to_message', 'post_message_blocks', 'update_message_blocks'],
         data: [
           'get_thread_replies',
           'list_workspace_channels',
@@ -244,7 +245,6 @@ class ConnectionTestSuite {
           'get_user_profile',
         ],
         search: ['search_messages', 'search_files'],
-        collection: ['collect_threads_by_timerange'],
       };
 
       const toolNames = tools.tools.map((t) => t.name);

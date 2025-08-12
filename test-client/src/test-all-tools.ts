@@ -62,12 +62,13 @@ class ComprehensiveToolTestSuite {
     try {
       await this.setupMCPConnection();
 
-      // Test all tool categories - Sprint 7.2: 11 tools (removed system)
+      // Test all tool categories - Sprint 7.4: 12 tools (Block Kit tools, thread collection removed)
       await this.testBasicTools();
       await this.testDataRetrievalTools();
       await this.testSearchTools();
-      await this.testThreadCollectionTools();
+
       await this.testMessagingTools();
+      await this.testBlockKitTools();
       // System tools removed in Sprint 7.2 optimization
     } finally {
       await this.cleanup();
@@ -100,8 +101,11 @@ class ComprehensiveToolTestSuite {
       await this.testPostMessage();
       await this.testReactToMessage();
       await this.testSearchMessages();
-      await this.testCollectThreads();
+
+
       await this.testGetThreadReplies();
+      await this.testPostMessageBlocks();
+      await this.testUpdateMessageBlocks();
       await this.testUpdateMessage();
       await this.testDeleteMessage();
     } catch (error) {
@@ -335,73 +339,7 @@ class ComprehensiveToolTestSuite {
     );
   }
 
-  private async testThreadCollectionTools(): Promise<void> {
-    console.log('🧵 Testing Time-Range Thread Collection Tool (Phase 6.2)...');
 
-    // Get current timestamp for time range testing
-    const currentTime = new Date();
-    const oneDayAgo = new Date(currentTime.getTime() - 24 * 60 * 60 * 1000);
-    const twoDaysAgo = new Date(currentTime.getTime() - 48 * 60 * 60 * 1000);
-
-    // Test collect_threads_by_timerange with 24-hour range
-    await this.testTool(
-      'collect_threads_by_timerange',
-      {
-        channel: this.testConfig.channels.public.id,
-        start_date: oneDayAgo.toISOString(),
-        end_date: currentTime.toISOString(),
-        include_parent: true,
-        include_metadata: true,
-        max_threads: 10,
-      },
-      'Collect threads from last 24 hours with metadata',
-      {
-        expectedResponseType: 'json',
-        expectSuccess: true,
-        expectedFields: ['channel', 'time_range', 'collection_summary', 'threads', 'metadata'],
-      }
-    );
-
-    // Test collect_threads_by_timerange with Unix timestamp format
-    const startTimestamp = Math.floor(twoDaysAgo.getTime() / 1000) + '.000000';
-    const endTimestamp = Math.floor(oneDayAgo.getTime() / 1000) + '.000000';
-
-    await this.testTool(
-      'collect_threads_by_timerange',
-      {
-        channel: this.testConfig.channels.public.id,
-        start_date: startTimestamp,
-        end_date: endTimestamp,
-        include_parent: false,
-        max_threads: 5,
-      },
-      'Collect threads with Unix timestamps (replies only)',
-      {
-        expectedResponseType: 'json',
-        expectSuccess: true,
-        expectedFields: ['collection_summary', 'threads'],
-      }
-    );
-
-    // Test collect_threads_by_timerange with minimal time range (likely no results)
-    const oneHourAgo = new Date(currentTime.getTime() - 60 * 60 * 1000);
-
-    await this.testTool(
-      'collect_threads_by_timerange',
-      {
-        channel: this.testConfig.channels.public.id,
-        start_date: oneHourAgo.toISOString(),
-        end_date: currentTime.toISOString(),
-        max_threads: 3,
-      },
-      'Collect threads from last hour (may return no results)',
-      {
-        expectedResponseType: 'json',
-        expectSuccess: true,
-        expectedFields: ['collection_summary', 'threads'],
-      }
-    );
-  }
 
   private async testMessagingTools(): Promise<void> {
     console.log('💬 Testing Messaging Tools (Dry Run)...');
@@ -444,6 +382,104 @@ class ComprehensiveToolTestSuite {
     );
   }
 
+  private async testBlockKitTools(): Promise<void> {
+    console.log('🎛️  Testing Block Kit Tools (Schema Validation)...');
+
+    // Test post_message_blocks schema validation
+    await this.testToolSchema(
+      'post_message_blocks',
+      {
+        channel: this.testConfig.channels.public.id,
+        blocks: JSON.stringify([
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: '*Test Block Kit Message*\nThis is a test message with Block Kit formatting.'
+            }
+          },
+          {
+            type: 'divider'
+          },
+          {
+            type: 'actions',
+            elements: [
+              {
+                type: 'button',
+                text: {
+                  type: 'plain_text',
+                  text: 'Test Button'
+                },
+                style: 'primary',
+                action_id: 'test_button'
+              }
+            ]
+          }
+        ]),
+        text: 'Test Block Kit message fallback',
+      },
+      'Post Block Kit message schema validation'
+    );
+
+    // Test update_message_blocks schema validation
+    await this.testToolSchema(
+      'update_message_blocks',
+      {
+        channel: this.testConfig.channels.public.id,
+        ts: '1234567890.123456',
+        blocks: JSON.stringify([
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: ':white_check_mark: *Updated Status*\nBlock Kit message has been updated successfully.'
+            }
+          },
+          {
+            type: 'context',
+            elements: [
+              {
+                type: 'mrkdwn',
+                text: 'Updated by test suite'
+              }
+            ]
+          }
+        ]),
+        text: 'Updated Block Kit message fallback',
+      },
+      'Update Block Kit message schema validation'
+    );
+
+    // Test Block Kit validation - invalid blocks
+    await this.testToolSchema(
+      'post_message_blocks',
+      {
+        channel: this.testConfig.channels.public.id,
+        blocks: JSON.stringify([
+          {
+            type: 'invalid_type', // Should fail validation
+            text: 'This should fail'
+          }
+        ]),
+        text: 'This should fail validation',
+        expectError: true,
+      },
+      'Block Kit validation error handling'
+    );
+
+    // Test Block Kit validation - empty blocks array
+    await this.testToolSchema(
+      'post_message_blocks',
+      {
+        channel: this.testConfig.channels.public.id,
+        blocks: JSON.stringify([]), // Should fail - empty array
+        text: 'This should fail validation',
+        expectError: true,
+      },
+      'Block Kit empty blocks validation'
+    );
+  }
+
   private async testSystemTools(): Promise<void> {
     console.log('⚙️  Testing System Tools...');
 
@@ -460,6 +496,7 @@ class ComprehensiveToolTestSuite {
       expectSuccess?: boolean;
       responseContains?: string;
       expectedFields?: string[];
+      customValidation?: (result: any) => { valid: boolean; warning?: string; error?: string };
     }
   ): Promise<void> {
     const startTime = Date.now();
@@ -513,6 +550,17 @@ class ComprehensiveToolTestSuite {
 
       if (validation?.expectSuccess === true && response.isError) {
         throw new Error(`Expected tool to succeed but it failed: ${responseText}`);
+      }
+
+      // Custom validation
+      if (validation?.customValidation && responseData) {
+        const customResult = validation.customValidation(responseData);
+        if (!customResult.valid) {
+          throw new Error(customResult.error || 'Custom validation failed');
+        }
+        if (customResult.warning) {
+          console.log(`   ⚠️ ${customResult.warning}`);
+        }
       }
 
       this.results.push({
@@ -700,37 +748,9 @@ class ComprehensiveToolTestSuite {
     );
   }
 
-  private async testCollectThreads(): Promise<void> {
-    console.log('\n🧵 8. Testing Thread Collection');
 
-    // Calculate time range - last 1 hour
-    const endTime = new Date();
-    const startTime = new Date(endTime.getTime() - 1 * 60 * 60 * 1000); // 1 hour ago
 
-    const result = await this.testSequentialTool(
-      'collect_threads_by_timerange',
-      {
-        channel: this.testConfig.channels.public.id,
-        start_date: startTime.toISOString(),
-        end_date: endTime.toISOString(),
-        include_parent: true,
-        include_metadata: true,
-        max_threads: 10,
-      },
-      'Collect recent threads for analysis'
-    );
 
-    // Try to find a thread with replies for next test
-    if (result && result.threads && result.threads.length > 0) {
-      for (const thread of result.threads) {
-        if (thread.reply_count && thread.reply_count > 0) {
-          this.testContext.threadTs = thread.thread_ts;
-          console.log(`   🎯 Found thread with replies: ${this.testContext.threadTs}`);
-          break;
-        }
-      }
-    }
-  }
 
   private async testGetThreadReplies(): Promise<void> {
     console.log('\n💭 9. Testing Thread Replies');
@@ -750,8 +770,99 @@ class ComprehensiveToolTestSuite {
     );
   }
 
+  private async testPostMessageBlocks(): Promise<void> {
+    console.log('\n🎛️  10. Testing Block Kit Message Posting');
+    const result = await this.testSequentialTool(
+      'post_message_blocks',
+      {
+        channel: this.testConfig.channels.public.id,
+        blocks: JSON.stringify([
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: `*🧪 Block Kit Test Message*\nPosted by MCP Sequential Test Suite\n_${new Date().toISOString()}_`
+            }
+          },
+          {
+            type: 'divider'
+          },
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: '✅ Block Kit formatting working correctly'
+            }
+          },
+          {
+            type: 'actions',
+            elements: [
+              {
+                type: 'button',
+                text: {
+                  type: 'plain_text',
+                  text: 'Test Button'
+                },
+                style: 'primary',
+                action_id: 'test_button',
+                value: 'test_value'
+              }
+            ]
+          }
+        ]),
+        text: 'Block Kit test message fallback',
+      },
+      'Post Block Kit message for testing'
+    );
+
+    if (result && result.ts) {
+      this.testContext.messageId = result.ts; // Update with Block Kit message
+      console.log(`   📝 Block Kit message ID stored: ${this.testContext.messageId}`);
+    }
+  }
+
+  private async testUpdateMessageBlocks(): Promise<void> {
+    console.log('\n🎛️  11. Testing Block Kit Message Update');
+    if (!this.testContext.messageId) {
+      console.log('   ⚠️  Skipping - no message ID from Block Kit post test');
+      return;
+    }
+
+    const result = await this.testSequentialTool(
+      'update_message_blocks',
+      {
+        channel: this.testConfig.channels.public.id,
+        ts: this.testContext.messageId,
+        blocks: JSON.stringify([
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: `*:white_check_mark: Block Kit Update Successful*\nMessage updated by MCP Test Suite\n_${new Date().toISOString()}_`
+            }
+          },
+          {
+            type: 'context',
+            elements: [
+              {
+                type: 'mrkdwn',
+                text: 'Status: Updated | Test: Block Kit messaging | Tool: update_message_blocks'
+              }
+            ]
+          }
+        ]),
+        text: 'Updated Block Kit message fallback',
+      },
+      'Update Block Kit message with new content'
+    );
+
+    if (result && result.ts) {
+      console.log(`   📝 Block Kit message updated: ${result.ts}`);
+    }
+  }
+
   private async testUpdateMessage(): Promise<void> {
-    console.log('\n✏️  10. Testing Message Update');
+    console.log('\n✏️  12. Testing Message Update');
     if (!this.testContext.messageId) {
       console.log('   ⚠️  Skipping - no message ID from post test');
       return;
@@ -775,7 +886,7 @@ class ComprehensiveToolTestSuite {
   }
 
   private async testDeleteMessage(): Promise<void> {
-    console.log('\n🗑️  11. Testing Message Deletion');
+    console.log('\n🗑️  13. Testing Message Deletion');
     if (!this.testContext.messageId) {
       console.log('   ⚠️  Skipping - no message ID from post test');
       return;
@@ -930,9 +1041,16 @@ class ComprehensiveToolTestSuite {
     const failedTests = this.results.filter((r) => r.status === 'FAIL').length;
     const skippedTests = this.results.filter((r) => r.status === 'SKIP').length;
 
-    // Group results by tool category - Sprint 7.2 Response Optimization (11 tools)
+    // Group results by tool category - Sprint 7.4 Block Kit Enhancement (12 tools)
     const toolCategories = {
-      messaging: ['post_message', 'update_message', 'delete_message', 'react_to_message'],
+      messaging: [
+        'post_message',
+        'update_message',
+        'delete_message',
+        'react_to_message',
+        'post_message_blocks',
+        'update_message_blocks'
+      ],
       data: [
         'get_thread_replies',
         'list_workspace_channels',
@@ -940,7 +1058,7 @@ class ComprehensiveToolTestSuite {
         'get_user_profile',
       ],
       search: ['search_messages', 'search_files'],
-      collection: ['collect_threads_by_timerange'],
+      // collection category removed - thread collection tools removed
       // system category removed - server_info tool removed in Sprint 7.2
     };
 
