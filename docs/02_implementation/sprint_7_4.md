@@ -8,8 +8,9 @@
 
 1. **✅ Block Kit Tools**: Create `post_message_blocks` and `update_message_blocks` tools
 2. **✅ Validation System**: Implement comprehensive Block Kit structure validation
-3. **✅ Production Integration**: Register new tools in production factory (12 → 14 tools)
+3. **✅ Production Integration**: Register new tools in production factory (12 final tools)
 4. **✅ Test Coverage**: Update test suite with Block Kit functionality testing
+5. **✅ Architecture Cleanup**: Remove thread collection tools in favor of search_messages
 
 ## 🔧 Technical Implementation
 
@@ -84,19 +85,20 @@ if (!block.elements || !Array.isArray(block.elements) || block.elements.length =
 
 ### 3. Production Factory Integration ✅
 
-**Updated Tool Count**: 12 → 14 tools
+**Final Tool Count**: 12 tools (Block Kit added, thread collection removed)
 **Modified Files**:
 - [`src/tools/production-factory.ts`](../../src/tools/production-factory.ts)
+- [`src/tools/time-range-thread-collection.ts`](../../src/tools/time-range-thread-collection.ts) - **REMOVED**
 - Updated imports and tool registration
 - Updated validation expectations and categories
 
-**Tool Categories**:
+**Final Tool Categories**:
 ```typescript
 {
-  messaging: 6,    // +2 Block Kit tools
+  messaging: 6,    // +2 Block Kit tools (post_message_blocks, update_message_blocks)
   data: 4,         // Unchanged
-  search: 2,       // Unchanged  
-  collection: 2    // Unchanged
+  search: 2,       // Unchanged (search_messages provides thread collection functionality)
+  collection: 0    // Removed - users can use search_messages with custom queries
 }
 ```
 
@@ -107,12 +109,39 @@ if (!block.elements || !Array.isArray(block.elements) || block.elements.length =
 - Added sequential test integration for data inheritance
 - Updated tool count references throughout test suite
 - Added validation error testing for invalid Block Kit structures
+- Removed all thread collection tool references
 
 **Test Cases**:
 1. **Valid Block Kit**: Section + divider + actions with button
 2. **Complex Blocks**: Multiple sections with context elements
 3. **Validation Testing**: Invalid block types and empty arrays
 4. **Sequential Flow**: Block Kit message → update → cleanup
+
+### 5. Architecture Cleanup ✅
+
+**Thread Collection Removal**:
+- **Removed**: `collect_threads_by_timerange` and `collect_threads_by_keyword` tools
+- **Rationale**: Users can achieve the same functionality with `search_messages` using custom queries
+- **Benefits**: Simplified architecture, reduced code complexity, more flexible search capabilities
+
+**Migration Guide**:
+```typescript
+// Before: collect_threads_by_timerange
+collect_threads_by_timerange({
+  channel: "C123",
+  hours: 24,
+  keywords: ["bug", "error"]
+})
+
+// After: search_messages with custom query
+search_messages({
+  query: "in:channel_name after:2025-08-10 (bug OR error)"
+})
+```
+
+**Files Removed**:
+- [`src/tools/time-range-thread-collection.ts`](../../src/tools/time-range-thread-collection.ts) - 785 lines deleted
+- All test references and documentation updated
 
 ## 📊 Implementation Results
 
@@ -122,17 +151,18 @@ if (!block.elements || !Array.isArray(block.elements) || block.elements.length =
 | ------------------------- | ------ | ------ | --------------------------------------------- |
 | **Messaging Tools**       | 4      | 6      | +2 (post_message_blocks, update_message_blocks) |
 | **Data Retrieval Tools**  | 4      | 4      | No change                                     |
-| **Enhanced Search Tools** | 2      | 2      | No change                                     |
-| **Thread Collection Tools** | 2    | 2      | No change                                     |
-| **Total**                 | **12** | **14** | **+2**                                        |
+| **Enhanced Search Tools** | 2      | 2      | No change (search_messages replaces collection) |
+| **Thread Collection Tools** | 2    | 0      | -2 (removed - use search_messages instead)   |
+| **Total**                 | **12** | **12** | **Net: 0** (+2 Block Kit, -2 collection)     |
 
 ### **Tool Registration Success**
 
 ✅ **Connection Tests**: 5/5 PASSED (100%)
 - MCP server connection successful
-- All 14 tools properly detected and registered
+- All 12 tools properly detected and registered
 - Tool categorization working correctly
 - Schema validation passing
+- Thread collection cleanup successful
 
 ### **Production Status**
 
@@ -227,10 +257,11 @@ if (!block.elements || !Array.isArray(block.elements) || block.elements.length =
 
 | Metric                      | Target       | Achieved     | Status |
 | --------------------------- | ------------ | ------------ | ------ |
-| **Tool Count**              | 14 tools     | 14 tools     | ✅     |
+| **Final Tool Count**        | 12 tools     | 12 tools     | ✅     |
 | **Block Kit Tools**         | 2 tools      | 2 tools      | ✅     |
 | **Production Integration**  | 100%         | 100%         | ✅     |
 | **Schema Validation**       | Complete     | Complete     | ✅     |
+| **Architecture Cleanup**    | Complete     | Complete     | ✅     |
 
 ### **Qualitative Goals** ✅
 
@@ -245,8 +276,9 @@ if (!block.elements || !Array.isArray(block.elements) || block.elements.length =
 
 1. **✅ Block Kit Messaging Tools**: Two specialized tools for interactive content
 2. **✅ Comprehensive Validation**: Runtime validation system for Block Kit structures  
-3. **✅ Production Integration**: 12 → 14 tools with proper registration
+3. **✅ Production Integration**: 12 tools with proper registration (Block Kit added, collection removed)
 4. **✅ Test Coverage**: Schema validation and sequential test integration
+5. **✅ Architecture Cleanup**: Thread collection tools removed in favor of flexible search_messages
 
 ### **Technical Excellence** ✅
 
@@ -266,6 +298,6 @@ if (!block.elements || !Array.isArray(block.elements) || block.elements.length =
 
 **🎯 Sprint 7.4 Goal**: ✅ **ACHIEVED** - Block Kit messaging tools successfully implemented with comprehensive validation and production integration.
 
-**📊 Final Status**: 14 production tools, Block Kit interactive messaging capability added, comprehensive validation system implemented.
+**📊 Final Status**: 12 production tools (Block Kit added, thread collection removed), interactive messaging capability added, comprehensive validation system implemented, architecture simplified.
 
 _📅 Completed: 2025-08-11 | Implementation: Block Kit messaging tools with interactive content support_
