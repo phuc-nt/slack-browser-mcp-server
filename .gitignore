@@ -57,3 +57,7 @@ CLAUDE.md
 
 # Serena MCP cache
 .serena/
+
+# Documentation and development folders
+docs/
+test-client/
