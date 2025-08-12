@@ -12,7 +12,23 @@ export class DataTools {
   static createGetThreadRepliesTool(): SlackTool {
     return {
       name: 'get_thread_replies',
-      description: 'Get all replies from a specific thread using the working conversations.replies API',
+      description: `Get all replies from a specific thread using the working conversations.replies API
+
+🔗 INTEGRATION WITH search_messages:
+Perfect companion tool for comprehensive information analysis:
+1. Use search_messages with 'has:thread' to find relevant threaded conversations  
+2. Extract thread_ts from search results
+3. Use get_thread_replies to get complete thread context and all participant responses
+
+💡 INFORMATION SYNTHESIS WORKFLOWS:
+• Incident Analysis: Search for incident threads → Get full conversation → Extract timeline and resolution
+• Decision Tracking: Find decision discussions → Get complete thread → Identify stakeholders and outcomes  
+• Knowledge Discovery: Search technical discussions → Get full context → Extract solutions and best practices
+• Team Communication: Find project threads → Get all updates → Synthesize current status
+
+📊 OPTIMAL FOR AI SUMMARIZATION:
+Returns complete threaded conversations with all replies, user information, timestamps, and message formatting - 
+perfect for generating comprehensive summaries, extracting decisions, tracking project progress, and understanding discussion context.`,
       category: ToolCategory.CONVERSATIONS,
       inputSchema: {
         type: 'object',
@@ -23,7 +39,13 @@ export class DataTools {
           },
           ts: {
             type: 'string',
-            description: 'Thread timestamp in format "1754661651.179039"'
+            description: `Thread timestamp in format "1754661651.179039" 
+
+💡 INTEGRATION TIP: Get this timestamp from search_messages results:
+• Use search_messages with 'has:thread' operator to find threaded discussions
+• Extract 'ts' field from search results  
+• Use that timestamp here to get complete thread conversation
+• Perfect for: incident analysis, decision tracking, project updates synthesis`
           },
           inclusive: {
             type: 'boolean',

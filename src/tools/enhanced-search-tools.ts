@@ -17,22 +17,59 @@ export class SearchMessagesTool extends BaseSlackTool {
   constructor() {
     const definition: SlackTool = {
       name: 'search_messages',
-      description: `Advanced message search across the entire Slack workspace with powerful query operators. 
-Supports complex search patterns including:
+      description: `Advanced message search across the entire Slack workspace with comprehensive query operators and AI optimization.
+Supports complex search patterns for information synthesis, thread discovery, and content analysis.
 
-CHANNEL SEARCH: Use 'in:channel_name' to search specific channels (e.g., 'in:general meeting')
-USER SEARCH: Use 'from:@username' for user-specific messages (e.g., 'from:@john deployment')  
-TIME SEARCH: Use 'after:date', 'before:date', 'on:date' for time-based filtering
-CONTENT SEARCH: Use 'has:link', 'has:attachment', 'has:reaction' for content types
-BOOLEAN LOGIC: Use AND, OR, parentheses, and minus (-) for complex queries
+🔍 CORE SEARCH OPERATORS:
+• CHANNEL: 'in:channel_name' - Search specific channels (in:general, in:engineering) 
+• USER: 'from:@username' or 'to:@username' - Messages from/to specific users
+• CONVERSATIONS: 'with:@username' - Find DMs and threads featuring specific users
+• EXCLUSION: '-in:channel_name' - Exclude specific channels from results
 
-Examples:
-- 'in:general from:@sarah "project update"' - Find project updates from Sarah in #general
-- 'error AND production -scheduled' - Find production errors excluding scheduled events  
-- 'has:attachment in:design "mockup"' - Find design files with mockups
-- 'after:2025-08-01 (urgent OR priority)' - Find recent urgent messages
+📅 TIME-BASED OPERATORS:
+• AFTER: 'after:2025-08-01' or 'after:yesterday' or 'after:last week'
+• BEFORE: 'before:2025-08-15' or 'before:today' or 'before:this month'  
+• ON: 'on:2025-08-12' or 'on:monday' - Specific dates
+• DURING: 'during:august' or 'during:last month' - Time periods
 
-Returns highlighted results with pagination support for large result sets.`,
+📎 CONTENT-TYPE OPERATORS:
+• FILES: 'has:attachment', 'has:file', 'has:image', 'has:document'
+• LINKS: 'has:link' - Messages containing URLs
+• REACTIONS: 'has:reaction' or 'has::emoji_name:' - Messages with reactions
+• PINS: 'has:pin' or 'is:pinned' - Pinned messages
+• THREADS: 'is:thread' - Messages in threads only
+• SAVED: 'is:saved' - Your saved messages
+
+🔧 ADVANCED QUERY PATTERNS:
+• BOOLEAN: 'error AND production', 'bug OR issue', 'deployment NOT scheduled'
+• GROUPING: '(urgent OR critical) AND production'  
+• PHRASES: '"exact phrase"' - Exact text matching
+• WILDCARDS: 'deploy*' - Prefix matching
+• COMBINATIONS: 'in:incidents after:yesterday has:link from:@oncall'
+
+💡 INFORMATION SYNTHESIS PATTERNS:
+• Thread Discovery: 'in:support has:thread "customer issue" after:this week'
+• Status Updates: 'from:@manager "status update" OR "progress report" during:last month'
+• Decision Tracking: '"decision" OR "agreed" OR "approved" in:leadership after:last week'
+• Issue Analysis: '(error OR bug OR failed) -from:@bot has:thread during:last 7 days'
+• Knowledge Mining: 'has:file (documentation OR guide OR spec) in:engineering'
+
+🔗 INTEGRATION WITH get_thread_replies:
+Search_messages finds threads → Use thread_ts from results → get_thread_replies for full conversation
+Example workflow: 
+1. search_messages: 'incident response in:alerts has:thread after:yesterday'
+2. Extract thread_ts from promising results  
+3. get_thread_replies: Get complete thread conversations for detailed analysis
+
+📊 OPTIMIZATION FOR AI SUMMARIZATION:
+• Use time filters to focus on relevant periods
+• Combine content-type filters to find rich information sources
+• Search for decision keywords to find resolution patterns
+• Use thread searches for comprehensive discussion context
+• Exclude bot channels to focus on human conversations
+
+Returns highlighted results with pagination support. Perfect for information gathering, 
+trend analysis, decision tracking, and comprehensive workspace knowledge synthesis.`,
       category: 'search',
       action: 'GET',
       requiresAuth: true,
@@ -45,8 +82,21 @@ Returns highlighted results with pagination support for large result sets.`,
         properties: {
           query: {
             type: 'string',
-            description:
-              'Search query with optional operators (in:, from:, after:, has:, AND, OR, -, parentheses)',
+            description: `Search query with comprehensive operators and patterns:
+
+BASIC: Simple keywords or "exact phrases"
+CHANNEL: in:channel_name, -in:channel_name  
+USER: from:@username, to:@username, with:@username
+TIME: after:date, before:date, on:date, during:period
+CONTENT: has:attachment, has:link, has:reaction, has:thread, is:pinned
+BOOLEAN: AND, OR, NOT, parentheses for grouping
+SYNTHESIS: Combine operators for information discovery
+
+Examples:
+• 'in:engineering "deployment" has:thread after:yesterday'
+• '(bug OR error) -from:@bot has:reaction during:last week'  
+• '"decision made" OR "approved" in:leadership after:monday'
+• 'has:file (spec OR documentation) from:@senior-dev'`,
             minLength: 1,
             maxLength: 500,
           },
