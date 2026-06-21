@@ -32,6 +32,9 @@ const createLogger = () => {
       new winston.transports.Console({
         handleExceptions: true,
         handleRejections: true,
+        // MCP uses stdout for JSON-RPC; ALL log levels must go to stderr or they
+        // corrupt the protocol stream ("Failed to parse JSONRPC message").
+        stderrLevels: ['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly'],
       }),
     ],
     exitOnError: false,
